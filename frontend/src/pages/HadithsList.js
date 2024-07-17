@@ -10,8 +10,9 @@ const HadithsList = () => {
     const [selectedChain, setSelectedChain] = useState(null);
     const [musannifList, setMusannifList] = useState([]);
     const [bookList, setBookList] = useState([]);
-    const [selectedMusannif, setSelectedMusannif] = useState('');
-    const [selectedBook, setSelectedBook] = useState('');
+    const [selectedMusannif, setSelectedMusannif] = useState([]);
+    const [selectedBook, setSelectedBook] = useState([]);
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -27,6 +28,13 @@ const HadithsList = () => {
                     search: searchTerm,
                     musannif: selectedMusannif,
                     book: selectedBook,
+                },
+                paramsSerializer: params => {
+                    return Object.keys(params)
+                        .map(key => Array.isArray(params[key])
+                            ? params[key].map(val => `${key}=${val}`).join('&')
+                            : `${key}=${params[key]}`)
+                        .join('&');
                 },
             });
             setHadiths(response.data);
@@ -70,6 +78,18 @@ const HadithsList = () => {
         setSelectedChain(formattedChain);
     };
 
+    const handleMusannifChange = (musannif) => {
+        setSelectedMusannif((prev) =>
+            prev.includes(musannif) ? prev.filter((item) => item !== musannif) : [...prev, musannif]
+        );
+    };
+
+    const handleBookChange = (book) => {
+        setSelectedBook((prev) =>
+            prev.includes(book) ? prev.filter((item) => item !== book) : [...prev, book]
+        );
+    };
+
     const renderPagination = () => {
         if (totalPages === 0) return null;
         const pages = [];
@@ -101,31 +121,47 @@ const HadithsList = () => {
                         className="w-6/12 p-2 text-lg rounded-full border border-gray-300"
                     />
                 </div>
-                <div className="mb-5 text-center">
-                    <select
-                        value={selectedMusannif}
-                        onChange={(e) => setSelectedMusannif(e.target.value)}
-                        className="w-6/12 p-2 text-lg rounded-full border border-gray-300"
+                <div className="mb-5 text-center relative">
+                    <button
+                        onClick={() => setShowFilters((prev) => !prev)}
+                        className="px-4 py-2 bg-primary-orange text-white rounded hover:bg-orange-300"
                     >
-                        <option value="">Select Musannif</option>
-                        {musannifList.map((musannif, index) => (
-                            <option key={index} value={musannif}>
-                                {musannif}
-                            </option>
-                        ))}
-                    </select>
-                    <select
-                        value={selectedBook}
-                        onChange={(e) => setSelectedBook(e.target.value)}
-                        className="w-6/12 p-2 text-lg rounded-full border border-gray-300 mt-3"
-                    >
-                        <option value="">Select Book</option>
-                        {bookList.map((book, index) => (
-                            <option key={index} value={book}>
-                                {book}
-                            </option>
-                        ))}
-                    </select>
+                        {showFilters ? 'Hide Filters' : 'Show Filters'}
+                    </button>
+                    {showFilters && (
+                        <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-gray-300 rounded-lg p-4 shadow-lg">
+                            <div className="mb-4">
+                                <h2 className="text-lg font-bold mb-2">Filter by Musannif</h2>
+                                {musannifList.map((musannif, index) => (
+                                    <label key={index} className="block">
+                                        <input
+                                            type="checkbox"
+                                            value={musannif}
+                                            checked={selectedMusannif.includes(musannif)}
+                                            onChange={() => handleMusannifChange(musannif)}
+                                            className="mr-2"
+                                        />
+                                        {musannif}
+                                    </label>
+                                ))}
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold mb-2">Filter by Book</h2>
+                                {bookList.map((book, index) => (
+                                    <label key={index} className="block">
+                                        <input
+                                            type="checkbox"
+                                            value={book}
+                                            checked={selectedBook.includes(book)}
+                                            onChange={() => handleBookChange(book)}
+                                            className="mr-2"
+                                        />
+                                        {book}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
                 <ul className="space-y-5 text-center">
                     {hadiths.map((hadith) => (
@@ -199,3 +235,4 @@ const HadithsList = () => {
 };
 
 export default HadithsList;
+

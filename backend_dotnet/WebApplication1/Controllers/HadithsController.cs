@@ -17,7 +17,7 @@ public class HadithsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetHadiths([FromQuery] int page = 1, [FromQuery] string search = "", [FromQuery] string musannif = "", [FromQuery] string book = "")
+    public async Task<IActionResult> GetHadiths([FromQuery] int page = 1, [FromQuery] string search = "", [FromQuery] List<string> musannif = null, [FromQuery] List<string> book = null)
     {
         int perPage = 10;
         var query = _context.Hadiths.AsQueryable();
@@ -33,14 +33,14 @@ public class HadithsController : ControllerBase
             );
         }
 
-        if (!string.IsNullOrEmpty(musannif))
+        if (musannif != null && musannif.Count > 0)
         {
-            query = query.Where(h => h.musannif == musannif);
+            query = query.Where(h => musannif.Contains(h.musannif));
         }
 
-        if (!string.IsNullOrEmpty(book))
+        if (book != null && book.Count > 0)
         {
-            query = query.Where(h => h.book == book);
+            query = query.Where(h => book.Contains(h.book));
         }
 
         var totalCount = await query.CountAsync();
@@ -55,6 +55,7 @@ public class HadithsController : ControllerBase
 
         return Ok(hadiths);
     }
+
 
 
     [HttpGet("hadith-by-book")]
