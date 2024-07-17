@@ -1,6 +1,8 @@
 # Hadith and Ravis Analysis Project
 
-  
+![dashboard](public/mock1.png)
+![dashboard](public/mock2.png)
+![dashboard](public/mock3.png)  
 
 This project involves scraping and analyzing hadiths and their narrators (ravis) from [Hadis Veritabanı](https://www.hadisveritabani.info/).
 
