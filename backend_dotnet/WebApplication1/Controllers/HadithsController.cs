@@ -17,7 +17,7 @@ public class HadithsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetHadiths([FromQuery] int page = 1, [FromQuery] string search = "")
+    public async Task<IActionResult> GetHadiths([FromQuery] int page = 1, [FromQuery] string search = "", [FromQuery] string musannif = "", [FromQuery] string book = "")
     {
         int perPage = 10;
         var query = _context.Hadiths.AsQueryable();
@@ -33,6 +33,16 @@ public class HadithsController : ControllerBase
             );
         }
 
+        if (!string.IsNullOrEmpty(musannif))
+        {
+            query = query.Where(h => h.musannif == musannif);
+        }
+
+        if (!string.IsNullOrEmpty(book))
+        {
+            query = query.Where(h => h.book == book);
+        }
+
         var totalCount = await query.CountAsync();
         var totalPages = (int)Math.Ceiling((double)totalCount / perPage);
 
@@ -45,6 +55,7 @@ public class HadithsController : ControllerBase
 
         return Ok(hadiths);
     }
+
 
     [HttpGet("hadith-by-book")]
     public async Task<IActionResult> GetHadithByBook()
@@ -70,4 +81,29 @@ public class HadithsController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("musannif-list")]
+    public async Task<IActionResult> GetMusannifList()
+    {
+        var musannifList = await _context.Hadiths
+            .Where(h => !string.IsNullOrEmpty(h.musannif))
+            .Select(h => h.musannif)
+            .Distinct()
+            .ToListAsync();
+
+        return Ok(musannifList);
+    }
+
+    [HttpGet("book-list")]
+    public async Task<IActionResult> GetBookList()
+    {
+        var bookList = await _context.Hadiths
+            .Where(h => !string.IsNullOrEmpty(h.book))
+            .Select(h => h.book)
+            .Distinct()
+            .ToListAsync();
+
+        return Ok(bookList);
+    }
+
 }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
 import ChainModal from './ChainModal';
 
 const HadithsList = () => {
@@ -9,18 +8,49 @@ const HadithsList = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedChain, setSelectedChain] = useState(null);
+    const [musannifList, setMusannifList] = useState([]);
+    const [bookList, setBookList] = useState([]);
+    const [selectedMusannif, setSelectedMusannif] = useState('');
+    const [selectedBook, setSelectedBook] = useState('');
 
     useEffect(() => {
         fetchData();
-    }, [currentPage, searchTerm]);
+        fetchMusannifList();
+        fetchBookList();
+    }, [currentPage, searchTerm, selectedMusannif, selectedBook]);
 
     const fetchData = async () => {
         try {
-            const response = await axios.get(`http://localhost:5031/api/hadiths?page=${currentPage}&search=${searchTerm}`);
+            const response = await axios.get(`http://localhost:5031/api/hadiths`, {
+                params: {
+                    page: currentPage,
+                    search: searchTerm,
+                    musannif: selectedMusannif,
+                    book: selectedBook,
+                },
+            });
             setHadiths(response.data);
             setTotalPages(response.headers['x-total-pages']);
         } catch (error) {
             console.error('Error fetching hadiths:', error);
+        }
+    };
+
+    const fetchMusannifList = async () => {
+        try {
+            const response = await axios.get('http://localhost:5031/api/hadiths/musannif-list');
+            setMusannifList(response.data);
+        } catch (error) {
+            console.error('Error fetching musannif list:', error);
+        }
+    };
+
+    const fetchBookList = async () => {
+        try {
+            const response = await axios.get('http://localhost:5031/api/hadiths/book-list');
+            setBookList(response.data);
+        } catch (error) {
+            console.error('Error fetching book list:', error);
         }
     };
 
@@ -34,13 +64,11 @@ const HadithsList = () => {
     };
 
     const handleChainClick = (chain) => {
-        // Clean up the chain string to remove semicolons and other unwanted characters
         const cleanChain = chain.replace(/[^\d;]/g, ''); // Replace anything that is not a digit or semicolon with empty string
         const formattedChain = cleanChain.replace(/;/g, ','); // Replace semicolons with commas
-    
+
         setSelectedChain(formattedChain);
     };
-    
 
     const renderPagination = () => {
         if (totalPages === 0) return null;
@@ -72,6 +100,32 @@ const HadithsList = () => {
                         onChange={handleSearch}
                         className="w-6/12 p-2 text-lg rounded-full border border-gray-300"
                     />
+                </div>
+                <div className="mb-5 text-center">
+                    <select
+                        value={selectedMusannif}
+                        onChange={(e) => setSelectedMusannif(e.target.value)}
+                        className="w-6/12 p-2 text-lg rounded-full border border-gray-300"
+                    >
+                        <option value="">Select Musannif</option>
+                        {musannifList.map((musannif, index) => (
+                            <option key={index} value={musannif}>
+                                {musannif}
+                            </option>
+                        ))}
+                    </select>
+                    <select
+                        value={selectedBook}
+                        onChange={(e) => setSelectedBook(e.target.value)}
+                        className="w-6/12 p-2 text-lg rounded-full border border-gray-300 mt-3"
+                    >
+                        <option value="">Select Book</option>
+                        {bookList.map((book, index) => (
+                            <option key={index} value={book}>
+                                {book}
+                            </option>
+                        ))}
+                    </select>
                 </div>
                 <ul className="space-y-5 text-center">
                     {hadiths.map((hadith) => (
