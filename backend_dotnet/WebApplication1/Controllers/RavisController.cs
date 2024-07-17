@@ -257,5 +257,42 @@ public class RavisController : ControllerBase
 
         return Ok(result);
     }
+    [HttpGet("hadiths-timeline")]
+    public async Task<IActionResult> GetHadithsTimeline()
+    {
+        var hadiths = await _context.Hadiths
+            .Select(h => new
+            {
+                h.id,
+                h.chain
+            })
+            .ToListAsync();
+
+        var ravis = await _context.Ravis
+            .Where(r => r.death_year_m != 0 && r.death_year_m != -1)
+            .Select(r => new { r.ravi_id, r.death_year_m })
+            .ToListAsync();
+
+        var result = hadiths
+            .Where(h => !string.IsNullOrEmpty(h.chain))
+            .Select(h => new
+            {
+                FirstRaviId = int.Parse(h.chain.Split(';')[0])
+            })
+            .Join(ravis,
+                h => h.FirstRaviId,
+                r => r.ravi_id,
+                (h, r) => r.death_year_m)
+            .GroupBy(year => year)
+            .Select(g => new
+            {
+                Year = g.Key,
+                HadithCount = g.Count()
+            })
+            .OrderBy(x => x.Year)
+            .ToList();
+
+        return Ok(result);
+    }
 
 }

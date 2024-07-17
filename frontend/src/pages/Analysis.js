@@ -6,6 +6,7 @@ import HadithByMusannifChart from '../components/charts/HadithByMusannifChart';
 import HadithByRaviReliabilityChart from '../components/charts/HadithByRaviReliabilityChart';
 import HadithByRaviNisbesiChart from '../components/charts/HadithByRaviNisbesiChart';
 import HadithByPlacesMap from '../components/charts/HadithByPlacesMap';
+import HadithByTime from '../components/charts/HadithByTime';
 
 
 
@@ -30,7 +31,13 @@ const Dashboard = () => (
     </div>
     <div className="chart-row">
       <ChartContainer title="Hadiths by Places">
-        <HadithByPlacesMap/>
+        <HadithByPlacesMap />
+      </ChartContainer>
+
+    </div>
+    <div className="chart-row">
+      <ChartContainer title="Hadiths by Time">
+        <HadithByTime />
       </ChartContainer>
 
     </div>
