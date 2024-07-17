@@ -1,0 +1,10 @@
+# Ignore the Debug folder in all directories
+Debug/
+**/Debug/
+
+# Ignore the bin and obj directories
+bin/
+obj/
+
+# Ignore the appsettings.json file
+appsettings.json
