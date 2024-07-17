@@ -2,6 +2,102 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ChainModal from './ChainModal';
 
+const Filters = ({ bookList, musannifList, onFilterApply }) => {
+    const [selectedBooks, setSelectedBooks] = useState([]);
+    const [selectedMusannifs, setSelectedMusannifs] = useState([]);
+    const [bookSearch, setBookSearch] = useState('');
+    const [musannifSearch, setMusannifSearch] = useState('');
+
+    const handleBookToggle = (book) => {
+        setSelectedBooks(prev =>
+            prev.includes(book) ? prev.filter(b => b !== book) : [...prev, book]
+        );
+    };
+
+    const handleMusannifToggle = (musannif) => {
+        setSelectedMusannifs(prev =>
+            prev.includes(musannif) ? prev.filter(m => m !== musannif) : [...prev, musannif]
+        );
+    };
+
+    const filteredBooks = bookList.filter(book =>
+        book.toLowerCase().includes(bookSearch.toLowerCase())
+    );
+
+    const filteredMusannifs = musannifList.filter(musannif =>
+        musannif.toLowerCase().includes(musannifSearch.toLowerCase())
+    );
+
+    const handleFilter = () => {
+        onFilterApply({ books: selectedBooks, musannifs: selectedMusannifs });
+    };
+
+    return (
+        <div className="bg-gray-100 p-4 rounded-lg">
+            <h2 className="text-2xl font-bold mb-4">Filters</h2>
+
+            <div className="mb-6">
+                <div className="flex justify-between items-center bg-gray-200 p-2 rounded">
+                    <h3 className="text-lg font-semibold">Books</h3>
+                    <span>▲</span>
+                </div>
+                <input
+                    type="text"
+                    placeholder="Search books..."
+                    value={bookSearch}
+                    onChange={(e) => setBookSearch(e.target.value)}
+                    className="w-full p-2 mt-2 border rounded"
+                />
+                <div className="mt-2 max-h-40 overflow-y-auto">
+                    {filteredBooks.map((book, index) => (
+                        <label key={index} className="flex items-center space-x-2 p-1">
+                            <input
+                                type="checkbox"
+                                checked={selectedBooks.includes(book)}
+                                onChange={() => handleBookToggle(book)}
+                            />
+                            <span>{book}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+
+            <div className="mb-6">
+                <div className="flex justify-between items-center bg-gray-200 p-2 rounded">
+                    <h3 className="text-lg font-semibold">Musannif</h3>
+                    <span>▲</span>
+                </div>
+                <input
+                    type="text"
+                    placeholder="Search musannifs..."
+                    value={musannifSearch}
+                    onChange={(e) => setMusannifSearch(e.target.value)}
+                    className="w-full p-2 mt-2 border rounded"
+                />
+                <div className="mt-2 max-h-40 overflow-y-auto">
+                    {filteredMusannifs.map((musannif, index) => (
+                        <label key={index} className="flex items-center space-x-2 p-1">
+                            <input
+                                type="checkbox"
+                                checked={selectedMusannifs.includes(musannif)}
+                                onChange={() => handleMusannifToggle(musannif)}
+                            />
+                            <span>{musannif}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+
+            <button
+                onClick={handleFilter}
+                className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+            >
+                Filter
+            </button>
+        </div>
+    );
+};
+
 const HadithsList = () => {
     const [hadiths, setHadiths] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -12,7 +108,6 @@ const HadithsList = () => {
     const [bookList, setBookList] = useState([]);
     const [selectedMusannif, setSelectedMusannif] = useState([]);
     const [selectedBook, setSelectedBook] = useState([]);
-    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -72,22 +167,15 @@ const HadithsList = () => {
     };
 
     const handleChainClick = (chain) => {
-        const cleanChain = chain.replace(/[^\d;]/g, ''); // Replace anything that is not a digit or semicolon with empty string
-        const formattedChain = cleanChain.replace(/;/g, ','); // Replace semicolons with commas
-
+        const cleanChain = chain.replace(/[^\d;]/g, '');
+        const formattedChain = cleanChain.replace(/;/g, ',');
         setSelectedChain(formattedChain);
     };
 
-    const handleMusannifChange = (musannif) => {
-        setSelectedMusannif((prev) =>
-            prev.includes(musannif) ? prev.filter((item) => item !== musannif) : [...prev, musannif]
-        );
-    };
-
-    const handleBookChange = (book) => {
-        setSelectedBook((prev) =>
-            prev.includes(book) ? prev.filter((item) => item !== book) : [...prev, book]
-        );
+    const handleFilterApply = ({ books, musannifs }) => {
+        setSelectedBook(books);
+        setSelectedMusannif(musannifs);
+        setCurrentPage(1);
     };
 
     const renderPagination = () => {
@@ -110,6 +198,13 @@ const HadithsList = () => {
 
     return (
         <div className="flex justify-center">
+            <div className="w-1/4 mt-5 mr-5">
+                <Filters
+                    bookList={bookList}
+                    musannifList={musannifList}
+                    onFilterApply={handleFilterApply}
+                />
+            </div>
             <div className="w-3/5 mt-5">
                 <h1 className="text-center text-4xl font-extrabold p-10 text-gray-700">Hadiths List</h1>
                 <div className="mb-5 text-center">
@@ -120,48 +215,6 @@ const HadithsList = () => {
                         onChange={handleSearch}
                         className="w-6/12 p-2 text-lg rounded-full border border-gray-300"
                     />
-                </div>
-                <div className="mb-5 text-center relative">
-                    <button
-                        onClick={() => setShowFilters((prev) => !prev)}
-                        className="px-4 py-2 bg-primary-orange text-white rounded hover:bg-orange-300"
-                    >
-                        {showFilters ? 'Hide Filters' : 'Show Filters'}
-                    </button>
-                    {showFilters && (
-                        <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-gray-300 rounded-lg p-4 shadow-lg">
-                            <div className="mb-4">
-                                <h2 className="text-lg font-bold mb-2">Filter by Musannif</h2>
-                                {musannifList.map((musannif, index) => (
-                                    <label key={index} className="block">
-                                        <input
-                                            type="checkbox"
-                                            value={musannif}
-                                            checked={selectedMusannif.includes(musannif)}
-                                            onChange={() => handleMusannifChange(musannif)}
-                                            className="mr-2"
-                                        />
-                                        {musannif}
-                                    </label>
-                                ))}
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-bold mb-2">Filter by Book</h2>
-                                {bookList.map((book, index) => (
-                                    <label key={index} className="block">
-                                        <input
-                                            type="checkbox"
-                                            value={book}
-                                            checked={selectedBook.includes(book)}
-                                            onChange={() => handleBookChange(book)}
-                                            className="mr-2"
-                                        />
-                                        {book}
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                 </div>
                 <ul className="space-y-5 text-center">
                     {hadiths.map((hadith) => (
@@ -235,4 +288,3 @@ const HadithsList = () => {
 };
 
 export default HadithsList;
-
