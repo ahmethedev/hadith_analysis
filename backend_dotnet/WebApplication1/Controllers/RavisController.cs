@@ -92,7 +92,7 @@ public class RavisController : ControllerBase
                     r => r.ravi_id,
                     (h, r) => r.reliability
                 )
-                .Where(reliability => !string.IsNullOrEmpty(reliability))
+                .Where(reliability => reliability != "-1")
                 .GroupBy(reliability => reliability)
                 .Select(g => new 
                 { 
