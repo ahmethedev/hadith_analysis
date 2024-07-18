@@ -225,7 +225,6 @@ public class RavisController : ControllerBase
 
         return Ok(result);
     }
-    
     [HttpGet("hadiths-timeline")]
     public async Task<IActionResult> GetHadithsTimeline()
     {
