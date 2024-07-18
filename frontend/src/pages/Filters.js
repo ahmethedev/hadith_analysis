@@ -38,7 +38,7 @@ const Filters = ({ bookList, musannifList, onFilterApply }) => {
 
             <div className="mb-6">
                 <div 
-                    className="flex justify-between items-center bg-gray-200 p-2 rounded cursor-pointer"
+                    className="flex justify-between items-center bg-gray-100 p-2 rounded cursor-pointer"
                     onClick={() => setIsBooksOpen(!isBooksOpen)}
                 >
                     <h3 className="text-lg font-semibold">Books</h3>
@@ -104,7 +104,7 @@ const Filters = ({ bookList, musannifList, onFilterApply }) => {
 
             <button
                 onClick={handleFilter}
-                className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                className='w-full hover:underline px-4 py-2 text-sm bg-primary-orange rounded-full text-white'
             >
                 Filter
             </button>

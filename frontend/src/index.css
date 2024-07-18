@@ -17,6 +17,24 @@
   padding: 120px 24px 160px 24px;
   pointer-events: none;
 }
+.dashboard {
+  padding: 20px;
+}
+
+.button-row {
+  margin-bottom: 20px;
+}
+
+.button-row button {
+  margin-right: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.chart-row {
+  margin-top: 20px;
+}
 
 
 .chart-container {
