@@ -41,6 +41,15 @@
   margin: 20px;
   padding: 20px;
   width: 500px;
+  height: 1000px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+}
+.chart-map-container {
+  margin: 20px;
+  padding: 20px;
+  width: 500px;
   height: 500px;
   border: 1px solid #ccc;
   border-radius: 8px;
