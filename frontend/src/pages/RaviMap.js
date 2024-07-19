@@ -1,41 +1,113 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Viva from 'vivagraphjs';
+import axios from 'axios';
 
 const RaviMap = () => {
-    const containerRef = useRef(null);
+    const [tribes, setTribes] = useState([]);
+    const [selectedTribe, setSelectedTribe] = useState('');
+    const [ravis, setRavis] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const graph = Viva.Graph.graph();
-        graph.addNode('anvaka', { url: 'https://secure.gravatar.com/avatar/91bad8ceeec43ae303790f8fe238164b' });
-        graph.addNode('manunt', { url: 'https://secure.gravatar.com/avatar/c81bfc2cf23958504617dd4fada3afa8' });
-        graph.addNode('thlorenz', { url: 'https://secure.gravatar.com/avatar/1c9054d6242bffd5fd25ec652a2b79cc' });
-        graph.addNode('bling', { url: 'https://secure.gravatar.com/avatar/24a5b6e62e9a486743a71e0a0a4f71af' });
-        graph.addNode('diyan', { url: 'https://secure.gravatar.com/avatar/01bce7702975191fdc402565bd1045a8?' });
-        graph.addNode('pocheptsov', { url: 'https://secure.gravatar.com/avatar/13da974fc9716b42f5d62e3c8056c718' });
-        graph.addNode('dimapasko', { url: 'https://secure.gravatar.com/avatar/8e587a4232502a9f1ca14e2810e3c3dd' });
+        const fetchTribes = async () => {
+            try {
+                const response = await axios.get('http://localhost:5031/api/Ravis/tribes');
+                setTribes(response.data);
+            } catch (error) {
+                console.error('Error fetching tribes:', error);
+            }
+        };
 
-        graph.addLink('anvaka', 'manunt');
-        graph.addLink('anvaka', 'thlorenz');
-        graph.addLink('anvaka', 'bling');
-        graph.addLink('anvaka', 'diyan');
-        graph.addLink('anvaka', 'pocheptsov');
-        graph.addLink('anvaka', 'dimapasko');
+        fetchTribes();
+    }, []);
+
+    useEffect(() => {
+        if (!selectedTribe) return;
+
+        const fetchRavisByTribe = async () => {
+            setLoading(true);
+            try {
+                const response = await axios.get(`http://localhost:5031/api/Ravis/by-tribe?tribe=${encodeURIComponent(selectedTribe)}`);
+                setRavis(response.data);
+            } catch (error) {
+                console.error('Error fetching ravis:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchRavisByTribe();
+    }, [selectedTribe]);
+
+    useEffect(() => {
+        if (ravis.length === 0) return;
+
+        // Remove existing graph container
+        const oldContainer = document.getElementById('graphContainer');
+        if (oldContainer) {
+            oldContainer.remove();
+        }
+
+        // Create new graph container
+        const newContainer = document.createElement('div');
+        newContainer.id = 'graphContainer';
+        newContainer.style.width = '100vw';
+        newContainer.style.height = '100vh';
+        document.body.appendChild(newContainer);
+
+        const graph = Viva.Graph.graph();
+
+        // Create nodes for each ravi
+        ravis.forEach(ravi => {
+            graph.addNode(ravi.ravi_id.toString(), { name: ravi.narrator_name });
+        });
+
+        // Create links between all ravis in the tribe
+        for (let i = 0; i < ravis.length; i++) {
+            for (let j = i + 1; j < ravis.length; j++) {
+                graph.addLink(ravis[i].ravi_id.toString(), ravis[j].ravi_id.toString());
+            }
+        }
 
         const graphics = Viva.Graph.View.svgGraphics();
-        graphics.node(function(node) {
-            // The function is called every time renderer needs a ui to display node
-            return Viva.Graph.svg('image')
-                  .attr('width', 24)
-                  .attr('height', 24)
-                  .link(node.data.url); // node.data holds custom object passed to graph.addNode();
-         })
-         .placeNode(function(nodeUI, pos){
-             // Shift image to let links go to the center:
-             nodeUI.attr('x', pos.x - 12).attr('y', pos.y - 12);
-         });
+
+        graphics.node((node) => {
+            const ui = Viva.Graph.svg('g');
+            const circle = Viva.Graph.svg('circle')
+                .attr('r', 20)
+                .attr('fill', '#00a2e8');
+            ui.append(circle);
+
+            const text = Viva.Graph.svg('text')
+                .text(node.data.name)
+                .attr('font-size', '10px')
+                .attr('fill', 'black')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'middle');
+            ui.append(text);
+
+            return ui;
+        }).placeNode((nodeUI, pos) => {
+            nodeUI.attr('transform', `translate(${pos.x}, ${pos.y})`);
+        });
+
+        graphics.link(() => {
+            return Viva.Graph.svg('line')
+                .attr('stroke', '#999')
+                .attr('stroke-width', 1);
+        });
+
+        const layout = Viva.Graph.Layout.forceDirected(graph, {
+            springLength: 200,
+            springCoeff: 0.0005,
+            dragCoeff: 0.02,
+            gravity: -1.2
+        });
+
         const renderer = Viva.Graph.View.renderer(graph, {
-            container: containerRef.current,
-            graphics,
+            container: newContainer,
+            graphics: graphics,
+            layout: layout
         });
 
         renderer.run();
@@ -43,9 +115,23 @@ const RaviMap = () => {
         return () => {
             renderer.dispose();
         };
-    }, []);
+    }, [ravis]);
 
-    return <div ref={containerRef} style={{ width: '100vw', height: '100vh' }} />;
+    const handleTribeChange = (event) => {
+        setSelectedTribe(event.target.value);
+    };
+
+    return (
+        <div>
+            <select value={selectedTribe} onChange={handleTribeChange}>
+                <option value="">Select a tribe</option>
+                {tribes.map(tribe => (
+                    <option key={tribe} value={tribe}>{tribe}</option>
+                ))}
+            </select>
+            {loading && <div>Loading...</div>}
+        </div>
+    );
 };
 
 export default RaviMap;
