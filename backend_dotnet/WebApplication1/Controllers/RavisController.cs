@@ -26,10 +26,10 @@ public class RavisController : ControllerBase
         {
             query = query.Where(r =>
                 EF.Functions.ILike(r.narrator_name, $"%{search}%") ||
-                EF.Functions.ILike(r.tribe, $"%{search}%") ||
-                EF.Functions.ILike(r.nisbe, $"%{search}%") ||
-                EF.Functions.ILike(r.degree, $"%{search}%") ||
-                EF.Functions.ILike(r.reliability, $"%{search}%")
+                (r.tribe != null && r.tribe != "-1" && r.tribe != "0" && EF.Functions.ILike(r.tribe, $"%{search}%")) ||
+                (r.nisbe != null && r.nisbe != "-1" && r.nisbe != "0" && EF.Functions.ILike(r.nisbe, $"%{search}%")) ||
+                (r.degree != null && r.degree != "-1" && r.degree != "0" && EF.Functions.ILike(r.degree, $"%{search}%")) ||
+                (r.reliability != null && r.reliability != "-1" && r.reliability != "0" && EF.Functions.ILike(r.reliability, $"%{search}%"))
             );
         }
 
@@ -50,18 +50,15 @@ public class RavisController : ControllerBase
     [HttpGet("hadith-by-tribe")]
     public async Task<IActionResult> GetHadithByTribe()
     {
-        // Fetch hadiths with non-empty chains
         var hadiths = await _context.Hadiths
             .Where(h => !string.IsNullOrEmpty(h.chain))
             .Select(h => new { h.id, h.chain })
             .ToListAsync();
 
-        // Fetch all ravis with non-null tribe and convert to dictionary
         var ravis = await _context.Ravis
-            .Where(r => r.tribe != null)
+            .Where(r => r.tribe != null && r.tribe != "-1" && r.tribe != "0")
             .ToDictionaryAsync(r => r.ravi_id, r => r.tribe);
 
-        // Process the hadiths in-memory
         var result = hadiths
             .Select(h => new
             {
@@ -77,21 +74,42 @@ public class RavisController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("tribes")]
+    public async Task<IActionResult> GetTribes()
+    {
+        var tribes = await _context.Ravis
+            .Where(r => !string.IsNullOrEmpty(r.tribe) && r.tribe != "-1" && r.tribe != "0")
+            .Select(r => r.tribe)
+            .Distinct()
+            .OrderBy(t => t)
+            .ToListAsync();
+
+        return Ok(tribes);
+    }
+
+    [HttpGet("by-tribe")]
+    public async Task<IActionResult> GetRavisByTribe([FromQuery] string tribe)
+    {
+        var ravis = await _context.Ravis
+            .Where(r => r.tribe == tribe && r.tribe != "-1" && r.tribe != "0")
+            .Select(r => new { r.ravi_id, r.narrator_name, r.tribe })
+            .ToListAsync();
+
+        return Ok(ravis);
+    }
+
     [HttpGet("hadith-by-ravi-reliability")]
     public async Task<IActionResult> GetHadithByRaviReliability()
     {
-        // Fetch hadiths with non-empty chains
         var hadiths = await _context.Hadiths
             .Where(h => !string.IsNullOrEmpty(h.chain))
             .Select(h => new { h.id, h.chain })
             .ToListAsync();
 
-        // Fetch all ravis
         var ravis = await _context.Ravis
-            .Where(r => r.reliability != "-1")
+            .Where(r => r.reliability != null && r.reliability != "-1" && r.reliability != "0")
             .ToDictionaryAsync(r => r.ravi_id, r => r.reliability);
 
-        // Process the hadiths in-memory
         var result = hadiths
             .Select(h => new
             {
@@ -107,19 +125,17 @@ public class RavisController : ControllerBase
         return Ok(result);
     }
 
-
     [HttpGet("hadith-by-ravi-nisbesi")]
     public async Task<IActionResult> GetHadithByRaviNisbesi()
     {
         var result = await _context.Hadiths
             .Where(h => !string.IsNullOrEmpty(h.chain))
             .Join(
-                _context.Ravis,
+                _context.Ravis.Where(r => r.nisbe != null && r.nisbe != "-1" && r.nisbe != "0"),
                 h => h.chain.Substring(0, h.chain.IndexOf(';')),
                 r => r.ravi_id.ToString(),
                 (h, r) => new { h.id, r.nisbe }
             )
-            .Where(x => x.nisbe != null && x.nisbe != "-1")
             .GroupBy(x => x.nisbe)
             .Select(g => new
             {
@@ -142,18 +158,17 @@ public class RavisController : ControllerBase
             {
                 r.ravi_id,
                 r.narrator_name,
-                r.birth_year_h,
-                r.birth_year_m,
-                r.death_year_h,
-                r.death_year_m,
-                r.placed_lived,
-                r.tribe,
-                r.nisbe,
-                r.job,
-                r.degree,
-                r.reliability,
-                r.biography,
-
+                birth_year_h = r.birth_year_h == 0 || r.birth_year_h == -1 ? null : r.birth_year_h,
+                birth_year_m = r.birth_year_m == 0 || r.birth_year_m == -1 ? null : r.birth_year_m,
+                death_year_h = r.death_year_h == 0 || r.death_year_h == -1 ? null : r.death_year_h,
+                death_year_m = r.death_year_m == 0 || r.death_year_m == -1 ? null : r.death_year_m,
+                placed_lived = r.placed_lived == "-1" || r.placed_lived == "0" ? null : r.placed_lived,
+                tribe = r.tribe == "-1" || r.tribe == "0" ? null : r.tribe,
+                nisbe = r.nisbe == "-1" || r.nisbe == "0" ? null : r.nisbe,
+                job = r.job == "-1" || r.job == "0" ? null : r.job,
+                degree = r.degree == "-1" || r.degree == "0" ? null : r.degree,
+                reliability = r.reliability == "-1" || r.reliability == "0" ? null : r.reliability,
+                biography = r.biography == "-1" || r.biography == "0" ? null : r.biography,
             })
             .FirstOrDefaultAsync();
 
@@ -181,18 +196,17 @@ public class RavisController : ControllerBase
             {
                 r.ravi_id,
                 r.narrator_name,
-                r.birth_year_h,
-                r.birth_year_m,
-                r.death_year_h,
-                r.death_year_m,
-                r.placed_lived,
-                r.tribe,
-                r.nisbe,
-                r.job,
-                r.degree,
-                r.reliability,
-                r.biography,
-
+                birth_year_h = r.birth_year_h == 0 || r.birth_year_h == -1 ? null : r.birth_year_h,
+                birth_year_m = r.birth_year_m == 0 || r.birth_year_m == -1 ? null : r.birth_year_m,
+                death_year_h = r.death_year_h == 0 || r.death_year_h == -1 ? null : r.death_year_h,
+                death_year_m = r.death_year_m == 0 || r.death_year_m == -1 ? null : r.death_year_m,
+                placed_lived = r.placed_lived == "-1" || r.placed_lived == "0" ? null : r.placed_lived,
+                tribe = r.tribe == "-1" || r.tribe == "0" ? null : r.tribe,
+                nisbe = r.nisbe == "-1" || r.nisbe == "0" ? null : r.nisbe,
+                job = r.job == "-1" || r.job == "0" ? null : r.job,
+                degree = r.degree == "-1" || r.degree == "0" ? null : r.degree,
+                reliability = r.reliability == "-1" || r.reliability == "0" ? null : r.reliability,
+                biography = r.biography == "-1" || r.biography == "0" ? null : r.biography,
             });
 
         var ravis = await ravisQuery.ToListAsync();
@@ -204,13 +218,14 @@ public class RavisController : ControllerBase
 
         return Ok(orderedRavis);
     }
+
     [HttpGet("hadith-by-places")]
     public async Task<IActionResult> GetHadithByPlaces()
     {
         var query = from h in _context.Hadiths
                     where !string.IsNullOrEmpty(h.chain)
                     join r in _context.Ravis on h.chain.Substring(0, h.chain.IndexOf(';')) equals r.ravi_id.ToString()
-                    where !string.IsNullOrEmpty(r.placed_lived) && r.placed_lived != "-1"
+                    where !string.IsNullOrEmpty(r.placed_lived) && r.placed_lived != "-1" && r.placed_lived != "0"
                     select r.placed_lived;
 
         var placesData = await query.ToListAsync();
@@ -218,6 +233,7 @@ public class RavisController : ControllerBase
         var result = placesData
             .SelectMany(places => places.Split(','))
             .Select(place => place.Trim())
+            .Where(place => !string.IsNullOrEmpty(place) && place != "-1" && place != "0")
             .GroupBy(place => place)
             .Select(g => new { Place = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
@@ -225,14 +241,14 @@ public class RavisController : ControllerBase
 
         return Ok(result);
     }
-    
+
     [HttpGet("hadiths-timeline")]
     public async Task<IActionResult> GetHadithsTimeline()
     {
         var result = await _context.Hadiths
             .Where(h => !string.IsNullOrEmpty(h.chain))
             .Join(
-                _context.Ravis.Where(r => r.death_year_m != 0 && r.death_year_m != -1),
+                _context.Ravis.Where(r => r.death_year_m > 0),
                 h => h.chain.Substring(0, h.chain.IndexOf(';')),
                 r => r.ravi_id.ToString(),
                 (h, r) => r.death_year_m
@@ -248,5 +264,4 @@ public class RavisController : ControllerBase
 
         return Ok(result);
     }
-
 }
