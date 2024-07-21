@@ -26,10 +26,10 @@ public class RavisController : ControllerBase
         {
             query = query.Where(r =>
                 EF.Functions.ILike(r.narrator_name, $"%{search}%") ||
-                EF.Functions.ILike(r.tribe, $"%{search}%") ||
-                EF.Functions.ILike(r.nisbe, $"%{search}%") ||
-                EF.Functions.ILike(r.degree, $"%{search}%") ||
-                EF.Functions.ILike(r.reliability, $"%{search}%")
+                (r.tribe != null && r.tribe != "-1" && r.tribe != "0" && EF.Functions.ILike(r.tribe, $"%{search}%")) ||
+                (r.nisbe != null && r.nisbe != "-1" && r.nisbe != "0" && EF.Functions.ILike(r.nisbe, $"%{search}%")) ||
+                (r.degree != null && r.degree != "-1" && r.degree != "0" && EF.Functions.ILike(r.degree, $"%{search}%")) ||
+                (r.reliability != null && r.reliability != "-1" && r.reliability != "0" && EF.Functions.ILike(r.reliability, $"%{search}%"))
             );
         }
 
@@ -159,6 +159,7 @@ public class RavisController : ControllerBase
             .OrderByDescending(x => x.HadithCount)
             .ThenBy(x => x.Nisbe)
             .ToList();
+            .ToList();
 
         return Ok(result);
     }
@@ -172,18 +173,17 @@ public class RavisController : ControllerBase
             {
                 r.ravi_id,
                 r.narrator_name,
-                r.birth_year_h,
-                r.birth_year_m,
-                r.death_year_h,
-                r.death_year_m,
-                r.placed_lived,
-                r.tribe,
-                r.nisbe,
-                r.job,
-                r.degree,
-                r.reliability,
-                r.biography,
-
+                birth_year_h = r.birth_year_h == 0 || r.birth_year_h == -1 ? null : r.birth_year_h,
+                birth_year_m = r.birth_year_m == 0 || r.birth_year_m == -1 ? null : r.birth_year_m,
+                death_year_h = r.death_year_h == 0 || r.death_year_h == -1 ? null : r.death_year_h,
+                death_year_m = r.death_year_m == 0 || r.death_year_m == -1 ? null : r.death_year_m,
+                placed_lived = r.placed_lived == "-1" || r.placed_lived == "0" ? null : r.placed_lived,
+                tribe = r.tribe == "-1" || r.tribe == "0" ? null : r.tribe,
+                nisbe = r.nisbe == "-1" || r.nisbe == "0" ? null : r.nisbe,
+                job = r.job == "-1" || r.job == "0" ? null : r.job,
+                degree = r.degree == "-1" || r.degree == "0" ? null : r.degree,
+                reliability = r.reliability == "-1" || r.reliability == "0" ? null : r.reliability,
+                biography = r.biography == "-1" || r.biography == "0" ? null : r.biography,
             })
             .FirstOrDefaultAsync();
 
@@ -211,18 +211,17 @@ public class RavisController : ControllerBase
             {
                 r.ravi_id,
                 r.narrator_name,
-                r.birth_year_h,
-                r.birth_year_m,
-                r.death_year_h,
-                r.death_year_m,
-                r.placed_lived,
-                r.tribe,
-                r.nisbe,
-                r.job,
-                r.degree,
-                r.reliability,
-                r.biography,
-
+                birth_year_h = r.birth_year_h == 0 || r.birth_year_h == -1 ? null : r.birth_year_h,
+                birth_year_m = r.birth_year_m == 0 || r.birth_year_m == -1 ? null : r.birth_year_m,
+                death_year_h = r.death_year_h == 0 || r.death_year_h == -1 ? null : r.death_year_h,
+                death_year_m = r.death_year_m == 0 || r.death_year_m == -1 ? null : r.death_year_m,
+                placed_lived = r.placed_lived == "-1" || r.placed_lived == "0" ? null : r.placed_lived,
+                tribe = r.tribe == "-1" || r.tribe == "0" ? null : r.tribe,
+                nisbe = r.nisbe == "-1" || r.nisbe == "0" ? null : r.nisbe,
+                job = r.job == "-1" || r.job == "0" ? null : r.job,
+                degree = r.degree == "-1" || r.degree == "0" ? null : r.degree,
+                reliability = r.reliability == "-1" || r.reliability == "0" ? null : r.reliability,
+                biography = r.biography == "-1" || r.biography == "0" ? null : r.biography,
             });
 
         var ravis = await ravisQuery.ToListAsync();
@@ -234,6 +233,7 @@ public class RavisController : ControllerBase
 
         return Ok(orderedRavis);
     }
+
     [HttpGet("hadith-by-places")]
     public async Task<IActionResult> GetHadithByPlaces()
     {
@@ -284,7 +284,29 @@ public class RavisController : ControllerBase
             .ToListAsync();
 
         var result = hadiths
+        var hadiths = await _context.Hadiths
+            .Select(h => new
+            {
+                h.id,
+                h.chain
+            })
+            .ToListAsync();
+
+        var ravis = await _context.Ravis
+            .Where(r => r.death_year_m != 0 && r.death_year_m != -1)
+            .Select(r => new { r.ravi_id, r.death_year_m })
+            .ToListAsync();
+
+        var result = hadiths
             .Where(h => !string.IsNullOrEmpty(h.chain))
+            .Select(h => new
+            {
+                FirstRaviId = int.Parse(h.chain.Split(';')[0])
+            })
+            .Join(ravis,
+                h => h.FirstRaviId,
+                r => r.ravi_id,
+                (h, r) => r.death_year_m)
             .Select(h => new
             {
                 FirstRaviId = int.Parse(h.chain.Split(';')[0])
@@ -301,8 +323,8 @@ public class RavisController : ControllerBase
             })
             .OrderBy(x => x.Year)
             .ToList();
+            .ToList();
 
         return Ok(result);
     }
-
 }
