@@ -43,72 +43,86 @@ public class RavisController : ControllerBase
             .ToListAsync();
 
         Response.Headers.Add("X-Total-Pages", totalPages.ToString());
-
+    
         return Ok(ravis);
     }
 
     [HttpGet("hadith-by-tribe")]
     public async Task<IActionResult> GetHadithByTribe()
     {
-        try
-        {
-            var result = await _context.Hadiths
-                .Where(h => !string.IsNullOrEmpty(h.chain))
-                .Join(
-                    _context.Ravis,
-                    h => int.Parse(h.chain.Split(';')[0]),
-                    r => r.ravi_id,
-                    (h, r) => r.tribe
-                )
-                .Where(tribe => !string.IsNullOrEmpty(tribe))
-                .GroupBy(tribe => tribe)
-                .Select(g => new 
-                { 
-                    Tribe = g.Key!, 
-                    HadithCount = g.Count() 
-                })
-                .OrderByDescending(x => x.HadithCount)
-                .ToListAsync();
+        var hadiths = await _context.Hadiths
+            .Where(h => !string.IsNullOrEmpty(h.chain))
+            .Select(h => new { h.id, h.chain })
+            .ToListAsync();
 
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while fetching hadith by tribe");
-            return StatusCode(500, "An error occurred while processing your request.");
-        }
+        var ravis = await _context.Ravis
+            .Where(r => r.tribe != null && r.tribe != "-1" && r.tribe != "0")
+            .ToDictionaryAsync(r => r.ravi_id, r => r.tribe);
+
+        var result = hadiths
+            .Select(h => new
+            {
+                h.id,
+                FirstRaviId = int.Parse(h.chain.Split(';')[0])
+            })
+            .Where(h => ravis.ContainsKey(h.FirstRaviId))
+            .GroupBy(h => ravis[h.FirstRaviId])
+            .Select(g => new { Tribe = g.Key!, HadithCount = g.Count() })
+            .OrderByDescending(x => x.HadithCount)
+            .ToList();
+
+        return Ok(result);
+    }
+
+    [HttpGet("tribes")]
+    public async Task<IActionResult> GetTribes()
+    {
+        var tribes = await _context.Ravis
+            .Where(r => !string.IsNullOrEmpty(r.tribe) && r.tribe != "-1" && r.tribe != "0")
+            .Select(r => r.tribe)
+            .Distinct()
+            .OrderBy(t => t)
+            .ToListAsync();
+
+        return Ok(tribes);
+    }
+
+    [HttpGet("by-tribe")]
+    public async Task<IActionResult> GetRavisByTribe([FromQuery] string tribe)
+    {
+        var ravis = await _context.Ravis
+            .Where(r => r.tribe == tribe && r.tribe != "-1" && r.tribe != "0")
+            .Select(r => new { r.ravi_id, r.narrator_name, r.tribe })
+            .ToListAsync();
+
+        return Ok(ravis);
     }
 
     [HttpGet("hadith-by-ravi-reliability")]
     public async Task<IActionResult> GetHadithByRaviReliability()
     {
-        try
-        {
-            var result = await _context.Hadiths
-                .Where(h => !string.IsNullOrEmpty(h.chain))
-                .Join(
-                    _context.Ravis,
-                    h => int.Parse(h.chain.Split(';')[0]),
-                    r => r.ravi_id,
-                    (h, r) => r.reliability
-                )
-                .Where(reliability => reliability != "-1")
-                .GroupBy(reliability => reliability)
-                .Select(g => new 
-                { 
-                    Reliability = g.Key!, 
-                    HadithCount = g.Count() 
-                })
-                .OrderByDescending(x => x.HadithCount)
-                .ToListAsync();
+        var hadiths = await _context.Hadiths
+            .Where(h => !string.IsNullOrEmpty(h.chain))
+            .Select(h => new { h.id, h.chain })
+            .ToListAsync();
 
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while fetching hadith by ravi reliability");
-            return StatusCode(500, "An error occurred while processing your request.");
-        }
+        var ravis = await _context.Ravis
+            .Where(r => r.reliability != null && r.reliability != "-1" && r.reliability != "0")
+            .ToDictionaryAsync(r => r.ravi_id, r => r.reliability);
+
+        var result = hadiths
+            .Select(h => new
+            {
+                h.id,
+                FirstRaviId = int.Parse(h.chain.Split(';')[0])
+            })
+            .Where(h => ravis.ContainsKey(h.FirstRaviId))
+            .GroupBy(h => ravis[h.FirstRaviId])
+            .Select(g => new { Reliability = g.Key!, HadithCount = g.Count() })
+            .OrderByDescending(x => x.HadithCount)
+            .ToList();
+
+        return Ok(result);
     }
 
     [HttpGet("hadith-by-ravi-nisbesi")]
@@ -125,12 +139,10 @@ public class RavisController : ControllerBase
                 h.topic,
                 h.page_index
             })
-            .Where(h => h.chain != null)
             .ToListAsync();
 
         var ravis = await _context.Ravis
             .Select(r => new { r.ravi_id, r.nisbe })
-            .Where(r => r.nisbe != "-1")
             .ToListAsync();
 
         var result = hadiths
@@ -158,7 +170,6 @@ public class RavisController : ControllerBase
             })
             .OrderByDescending(x => x.HadithCount)
             .ThenBy(x => x.Nisbe)
-            .ToList();
             .ToList();
 
         return Ok(result);
@@ -239,12 +250,10 @@ public class RavisController : ControllerBase
     {
         var hadiths = await _context.Hadiths
             .Select(h => new { h.id, h.chain })
-            .Where(h => h.chain != null)
             .ToListAsync();
 
         var ravis = await _context.Ravis
             .Select(r => new { r.ravi_id, r.placed_lived })
-            .Where(r => r.placed_lived != "-1")
             .ToListAsync();
 
         var result = hadiths
@@ -284,29 +293,7 @@ public class RavisController : ControllerBase
             .ToListAsync();
 
         var result = hadiths
-        var hadiths = await _context.Hadiths
-            .Select(h => new
-            {
-                h.id,
-                h.chain
-            })
-            .ToListAsync();
-
-        var ravis = await _context.Ravis
-            .Where(r => r.death_year_m != 0 && r.death_year_m != -1)
-            .Select(r => new { r.ravi_id, r.death_year_m })
-            .ToListAsync();
-
-        var result = hadiths
             .Where(h => !string.IsNullOrEmpty(h.chain))
-            .Select(h => new
-            {
-                FirstRaviId = int.Parse(h.chain.Split(';')[0])
-            })
-            .Join(ravis,
-                h => h.FirstRaviId,
-                r => r.ravi_id,
-                (h, r) => r.death_year_m)
             .Select(h => new
             {
                 FirstRaviId = int.Parse(h.chain.Split(';')[0])
@@ -323,8 +310,39 @@ public class RavisController : ControllerBase
             })
             .OrderBy(x => x.Year)
             .ToList();
-            .ToList();
 
         return Ok(result);
+    }
+    [HttpGet("count")]
+    public async Task<IActionResult> GetRavisCount([FromQuery] string search = "", [FromQuery] List<string> tribe = null, [FromQuery] List<string> nisbe = null)
+    {
+        var query = _context.Ravis.AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(r =>
+                EF.Functions.ILike(r.narrator_name, $"%{search}%") ||
+                (r.tribe != null && r.tribe != "-1" && r.tribe != "0" && EF.Functions.ILike(r.tribe, $"%{search}%")) ||
+                (r.nisbe != null && r.nisbe != "-1" && r.nisbe != "0" && EF.Functions.ILike(r.nisbe, $"%{search}%")) ||
+                (r.degree != null && r.degree != "-1" && r.degree != "0" && EF.Functions.ILike(r.degree, $"%{search}%")) ||
+                (r.reliability != null && r.reliability != "-1" && r.reliability != "0" && EF.Functions.ILike(r.reliability, $"%{search}%"))
+            );
+        }
+
+        if (tribe != null && tribe.Count > 0)
+        {
+            query = query.Where(r => tribe.Contains(r.tribe));
+        }
+
+        if (nisbe != null && nisbe.Count > 0)
+        {
+            query = query.Where(r => nisbe.Contains(r.nisbe));
+        }
+
+        var totalCount = await query.CountAsync();
+        
+        Console.WriteLine($"Total Ravis Count: {totalCount}");
+
+        return Ok(totalCount);
     }
 }

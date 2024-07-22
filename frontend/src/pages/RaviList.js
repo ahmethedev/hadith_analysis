@@ -6,10 +6,15 @@ const RaviList = () => {
     const [ravis, setRavis] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
+    const [totalRavis, setTotalRavis] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedTribe, setSelectedTribe] = useState([]);
+    const [selectedNisbe, setSelectedNisbe] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         fetchData();
+        fetchTotalRavis();
     }, [currentPage, searchTerm]);
 
     const fetchData = async () => {
@@ -21,7 +26,33 @@ const RaviList = () => {
             console.error('Error fetching ravis:', error);
         }
     };
-
+    const fetchTotalRavis = async () => {
+        setIsLoading(true);
+        try {
+            const response = await axios.get('http://localhost:5031/api/ravis/count', {
+                params: {
+                    search: searchTerm,
+                    tribe: selectedTribe,
+                    nisbe: selectedNisbe,
+                },
+                paramsSerializer: params => {
+                    return Object.keys(params)
+                        .map(key => Array.isArray(params[key])
+                            ? params[key].map(val => `${key}=${val}`).join('&')
+                            : `${key}=${params[key]}`)
+                        .join('&');
+                },
+            });
+            console.log('Total ravis response:', response.data);
+            setTotalRavis(response.data);
+            console.log('Total ravis set to:', response.data.TotalCount);
+        } catch (error) {
+            console.error('Error fetching total ravis count:', error);
+            setTotalRavis(0);
+        } finally {
+            setIsLoading(false);
+        }
+    };
     const handlePageClick = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
@@ -68,8 +99,14 @@ const RaviList = () => {
                         onChange={handleSearch}
                         className="w-full max-w-md p-3 text-lg border rounded-full"
                     />
+                    
                 </div>
 
+                <div className="mb-5 p-4 bg-white/80 backdrop-blur-lg rounded-lg shadow-lg" key={totalRavis}>
+                    <p className="text-xl font-bold text-gray-800 mb-2">
+                        Total Ravis Found: {isLoading ? 'Loading...' : totalRavis}
+                    </p>
+                    </div>
                 <ul className="space-y-5">
                     {ravis.map((ravi) => (
                         <li key={ravi.ravi_id} className="p-4 border rounded-lg shadow-lg bg-white/80 backdrop-blur-lg shadow-orange-300 transform transition-transform duration-300  hover:shadow-orange-100">

@@ -1,25 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ChainModal from './ChainModal';
-import Filters from './Filters';
-
+import Filters from './HadithFilters';
 
 const HadithsList = () => {
     const [hadiths, setHadiths] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
+    const [totalHadiths, setTotalHadiths] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedChain, setSelectedChain] = useState(null);
     const [musannifList, setMusannifList] = useState([]);
     const [bookList, setBookList] = useState([]);
     const [selectedMusannif, setSelectedMusannif] = useState([]);
     const [selectedBook, setSelectedBook] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         fetchData();
         fetchMusannifList();
         fetchBookList();
+        fetchTotalHadiths();
     }, [currentPage, searchTerm, selectedMusannif, selectedBook]);
+
+
 
     const fetchData = async () => {
         try {
@@ -39,9 +43,37 @@ const HadithsList = () => {
                 },
             });
             setHadiths(response.data);
-            setTotalPages(response.headers['x-total-pages']);
-        } catch (error) {
+            setTotalPages(parseInt(response.headers['total-pages-hadiths'] || '0', 10));
+        } catch (error) {   
             console.error('Error fetching hadiths:', error);
+        }
+    };
+
+    const fetchTotalHadiths = async () => {
+        setIsLoading(true);
+        try {
+            const response = await axios.get('http://localhost:5031/api/hadiths/count', {
+                params: {
+                    search: searchTerm,
+                    musannif: selectedMusannif,
+                    book: selectedBook,
+                },
+                paramsSerializer: params => {
+                    return Object.keys(params)
+                        .map(key => Array.isArray(params[key])
+                            ? params[key].map(val => `${key}=${val}`).join('&')
+                            : `${key}=${params[key]}`)
+                        .join('&');
+                },
+            });
+            console.log('Total hadiths response:', response.data);
+            setTotalHadiths(response.data);
+            console.log('Total hadiths set to:', response.data.TotalCount);
+        } catch (error) {
+            console.error('Error fetching total hadiths count:', error);
+            setTotalHadiths(0);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -92,8 +124,7 @@ const HadithsList = () => {
                 <button
                     key={i}
                     onClick={() => handlePageClick(i)}
-                    className={`mx-1 px-3 py-2 rounded border ${currentPage === i ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'
-                        }`}
+                    className={`mx-1 px-3 py-2 rounded border ${currentPage === i ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'}`}
                 >
                     {i}
                 </button>
@@ -113,6 +144,20 @@ const HadithsList = () => {
             </div>
             <div className="w-3/5 mt-5">
                 <h1 className="text-center text-4xl font-extrabold p-10 text-gray-700">Hadiths List</h1>
+                
+                <div className="mb-5 p-4 bg-white/80 backdrop-blur-lg rounded-lg shadow-lg" key={totalHadiths}>
+                    <p className="text-xl font-bold text-gray-800 mb-2">
+                        Total Hadiths Found: {isLoading ? 'Loading...' : totalHadiths}
+                    </p>
+                    <p className="text-md text-gray-700">
+                        <span className="font-semibold">Current Filters:</span>
+                        {selectedBook.length > 0 && <span className="ml-2 px-2 py-1 bg-orange-100 rounded-full text-sm">{`Books: ${selectedBook.join(', ')}`}</span>}
+                        {selectedMusannif.length > 0 && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-full text-sm">{`Musannifs: ${selectedMusannif.join(', ')}`}</span>}
+                        {searchTerm && <span className="ml-2 px-2 py-1 bg-green-100 rounded-full text-sm">{`Search: "${searchTerm}"`}</span>}
+                        {selectedBook.length === 0 && selectedMusannif.length === 0 && !searchTerm && <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full text-sm">None</span>}
+                    </p>
+                </div>
+
                 <div className="mb-5 text-center">
                     <input
                         type="text"

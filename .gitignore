@@ -8,3 +8,5 @@ obj/
 
 # Ignore the appsettings.json file
 appsettings.json
+
+RavisController.cs
