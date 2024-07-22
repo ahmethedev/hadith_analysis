@@ -14,7 +14,7 @@
   position: fixed;
   display: flex;
   justify-content: center;
-  padding: 120px 24px 160px 24px;
+  padding: 20px 24px 160px 24px;
   pointer-events: none;
 }
 .dashboard {
@@ -46,20 +46,33 @@ svg {
   margin: 20px;
   padding: 20px;
   width: 500px;
+  height: 900px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+#reliability-chart {
+  margin: 20px;
+  padding: 20px;
+  width: 500px;
   height: 1000px;
   border: 1px solid #ccc;
   border-radius: 8px;
   background-color: #fff;
 }
-.chart-map-container {
+
+#places-chart {
   margin: 20px;
   padding: 20px;
   width: 500px;
-  height: 500px;
+  height: 1000px;
   border: 1px solid #ccc;
   border-radius: 8px;
   background-color: #fff;
+
 }
+
 .dashboard {
   display: flex;
   flex-direction: column;

@@ -22,6 +22,7 @@ const HadithByMusannifChart = () => {
           datasets: [{
             label: 'Number of Hadiths',
             data: data.map(item => item.hadithCount),
+            height: '100%',
             backgroundColor: 'rgba(153, 102, 255, 0.6)',
             borderColor: 'rgba(153, 102, 255, 1)',
             borderWidth: 1,

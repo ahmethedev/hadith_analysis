@@ -43,7 +43,7 @@ public class RavisController : ControllerBase
             .ToListAsync();
 
         Response.Headers.Add("X-Total-Pages", totalPages.ToString());
-
+    
         return Ok(ravis);
     }
 
@@ -313,6 +313,41 @@ public class RavisController : ControllerBase
 
         return Ok(result);
     }
+<<<<<<< HEAD
 
     
+=======
+    [HttpGet("count")]
+    public async Task<IActionResult> GetRavisCount([FromQuery] string search = "", [FromQuery] List<string> tribe = null, [FromQuery] List<string> nisbe = null)
+    {
+        var query = _context.Ravis.AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(r =>
+                EF.Functions.ILike(r.narrator_name, $"%{search}%") ||
+                (r.tribe != null && r.tribe != "-1" && r.tribe != "0" && EF.Functions.ILike(r.tribe, $"%{search}%")) ||
+                (r.nisbe != null && r.nisbe != "-1" && r.nisbe != "0" && EF.Functions.ILike(r.nisbe, $"%{search}%")) ||
+                (r.degree != null && r.degree != "-1" && r.degree != "0" && EF.Functions.ILike(r.degree, $"%{search}%")) ||
+                (r.reliability != null && r.reliability != "-1" && r.reliability != "0" && EF.Functions.ILike(r.reliability, $"%{search}%"))
+            );
+        }
+
+        if (tribe != null && tribe.Count > 0)
+        {
+            query = query.Where(r => tribe.Contains(r.tribe));
+        }
+
+        if (nisbe != null && nisbe.Count > 0)
+        {
+            query = query.Where(r => nisbe.Contains(r.nisbe));
+        }
+
+        var totalCount = await query.CountAsync();
+        
+        Console.WriteLine($"Total Ravis Count: {totalCount}");
+
+        return Ok(totalCount);
+    }
+>>>>>>> a25900894b75cc48bdaf3b20f6a0af0e3f6670c3
 }

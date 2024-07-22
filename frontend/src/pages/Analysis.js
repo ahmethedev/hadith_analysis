@@ -31,18 +31,22 @@ const Dashboard = () => {
             <HadithByMusannifChart />
           </ChartContainer>
         );
-      case 'reliability':
-        return (
-          <ChartContainer title="Hadiths Grouped By Its Chain's First Ravi's Reliability">
-            <HadithByRaviReliabilityChart />
-          </ChartContainer>
-        );
-      case 'places':
-        return (
-          <ChartContainer title="Places marked by Hadiths First Chain's Ravi's Death Places">
-            <HadithByPlacesMap />
-          </ChartContainer>
-        );
+        case 'reliability':
+          return (
+            <ChartContainer 
+              id="reliability-chart"
+              title="Hadiths Grouped By Its Chain's First Ravi's Reliability">
+              <HadithByRaviReliabilityChart />
+            </ChartContainer>
+          );
+          case 'places':
+          return (
+            <ChartContainer 
+              id="place-chart"
+              title="Places marked by Hadiths First Chain's Ravi's Death Places">
+              <HadithByPlacesMap />
+            </ChartContainer>
+          );
       case 'time':
         return (
           <ChartContainer title="Hadiths Grouped by Its Chain's First Ravi's Death Year">
