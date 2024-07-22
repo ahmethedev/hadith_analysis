@@ -313,10 +313,6 @@ public class RavisController : ControllerBase
 
         return Ok(result);
     }
-<<<<<<< HEAD
-
-    
-=======
     [HttpGet("count")]
     public async Task<IActionResult> GetRavisCount([FromQuery] string search = "", [FromQuery] List<string> tribe = null, [FromQuery] List<string> nisbe = null)
     {
@@ -349,5 +345,4 @@ public class RavisController : ControllerBase
 
         return Ok(totalCount);
     }
->>>>>>> a25900894b75cc48bdaf3b20f6a0af0e3f6670c3
 }
