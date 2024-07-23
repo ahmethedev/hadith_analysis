@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ChainModal from './ChainModal';
 import Filters from './HadithFilters';
+import ArabicKeyboard from '../components/common/arabicLayout'
 
 const HadithsList = () => {
     const [hadiths, setHadiths] = useState([]);
@@ -15,6 +16,7 @@ const HadithsList = () => {
     const [selectedMusannif, setSelectedMusannif] = useState([]);
     const [selectedBook, setSelectedBook] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [showArabicKeyboard, setShowArabicKeyboard] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -104,6 +106,19 @@ const HadithsList = () => {
         setCurrentPage(1);
     };
 
+    const handleKeyPress = (key) => {
+        if (key === 'delete') {
+            setSearchTerm(prevTerm => prevTerm.slice(0, -1));
+        } else {
+            setSearchTerm(prevTerm => prevTerm + key);
+        }
+        setCurrentPage(1);
+    };
+
+    const toggleArabicKeyboard = () => {
+        setShowArabicKeyboard(!showArabicKeyboard);
+    };
+
     const handleChainClick = (chain) => {
         const cleanChain = chain.replace(/[^\d;]/g, '');
         const formattedChain = cleanChain.replace(/;/g, ',');
@@ -158,14 +173,27 @@ const HadithsList = () => {
                     </p>
                 </div>
 
-                <div className="mb-5 text-center">
-                    <input
-                        type="text"
-                        placeholder="Search hadiths..."
-                        value={searchTerm}
-                        onChange={handleSearch}
-                        className="w-6/12 p-2 text-lg rounded-full border border-gray-300"
-                    />
+                 <div className="mb-5 text-center relative">
+                    <div className="flex items-center justify-center">
+                        <input
+                            type="text"
+                            placeholder="Search hadiths..."
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            className="w-6/12 p-2 text-lg rounded-l-full border border-gray-300"
+                        />
+                        <button
+                            onClick={toggleArabicKeyboard}
+                            className="px-4 py-2 bg-blue-500 text-white rounded-r-full hover:bg-blue-600">
+                            {showArabicKeyboard ? 'Hide' : 'Show'} Arabic Keyboard
+                                
+                        </button>
+                    </div>
+                    {showArabicKeyboard && (
+                        <div className="absolute z-10 mt-2 left-1/2 transform -translate-x-1/2">
+                            <ArabicKeyboard onKeyPress={handleKeyPress} />
+                        </div>
+                    )}
                 </div>
                 <ul className="space-y-5 text-center">
                     {hadiths.map((hadith) => (

@@ -345,4 +345,52 @@ public class RavisController : ControllerBase
 
         return Ok(totalCount);
     }
+    [HttpGet("job-list")]
+    public async Task<IActionResult> GetJobs()
+    {
+        var jobs = await _context.Ravis
+            .Where(r => !string.IsNullOrEmpty(r.job) && r.job != "-1" && r.job != "0")
+            .Select(r => r.job)
+            .ToListAsync();
+
+        var uniqueJobs = new HashSet<string>();
+
+        foreach (var job in jobs)
+        {
+            var splittedJobs = job.Split(new string[] { "-#-" }, StringSplitOptions.None);
+            foreach (var sJob in splittedJobs)
+            {
+                uniqueJobs.Add(sJob.Trim());
+            }
+        }
+
+        var orderedUniqueJobs = uniqueJobs.OrderBy(j => j).ToList();
+
+        return Ok(orderedUniqueJobs);
+    }
+
+    [HttpGet("nisbe-list")]
+    public async Task<IActionResult> GetNsbes()
+    {
+        var nisbes = await _context.Ravis
+            .Where(r => !string.IsNullOrEmpty(r.nisbe) && r.nisbe != "-1" && r.nisbe != "0")
+            .Select(r => r.nisbe)
+            .ToListAsync();
+
+        var uniqueNisbes = new HashSet<string>();
+
+        foreach (var nisbe in nisbes)
+        {
+            var splittedNisbes = nisbe.Split(',').Select(n => n.Trim());
+            foreach (var sNisbe in splittedNisbes)
+            {
+                uniqueNisbes.Add(sNisbe);
+            }
+        }
+
+        var orderedUniqueNisbes = uniqueNisbes.OrderBy(n => n).ToList();
+
+        return Ok(orderedUniqueNisbes);
+    }
+
 }

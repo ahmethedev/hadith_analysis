@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import RaviFilters from './raviFilters';
 
 const RaviList = () => {
     const [ravis, setRavis] = useState([]);
@@ -8,32 +8,27 @@ const RaviList = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [totalRavis, setTotalRavis] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedTribe, setSelectedTribe] = useState([]);
-    const [selectedNisbe, setSelectedNisbe] = useState([]);
+    const [jobList, setJobList] = useState([]);
+    const [nisbeList, setNisbeList] = useState([]);
+    const [selectedJobs, setSelectedJobs] = useState([]);
+    const [selectedNisbes, setSelectedNisbes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         fetchData();
+        fetchJobList();
+        fetchNisbeList();
         fetchTotalRavis();
-    }, [currentPage, searchTerm]);
+    }, [currentPage, searchTerm, selectedJobs, selectedNisbes]);
 
     const fetchData = async () => {
         try {
-            const response = await axios.get(`http://localhost:5031/api/ravis?page=${currentPage}&search=${searchTerm}`);
-            setRavis(response.data);
-            setTotalPages(response.headers['x-total-pages']);
-        } catch (error) {
-            console.error('Error fetching ravis:', error);
-        }
-    };
-    const fetchTotalRavis = async () => {
-        setIsLoading(true);
-        try {
-            const response = await axios.get('http://localhost:5031/api/ravis/count', {
+            const response = await axios.get(`http://localhost:5031/api/Ravis`, {
                 params: {
+                    page: currentPage,
                     search: searchTerm,
-                    tribe: selectedTribe,
-                    nisbe: selectedNisbe,
+                    jobs: selectedJobs,
+                    nisbes: selectedNisbes,
                 },
                 paramsSerializer: params => {
                     return Object.keys(params)
@@ -43,9 +38,31 @@ const RaviList = () => {
                         .join('&');
                 },
             });
-            console.log('Total ravis response:', response.data);
+            setRavis(response.data);
+            setTotalPages(parseInt(response.headers['total-pages'] || '0', 10));
+        } catch (error) {   
+            console.error('Error fetching ravis:', error);
+        }
+    };
+
+    const fetchTotalRavis = async () => {
+        setIsLoading(true);
+        try {
+            const response = await axios.get('http://localhost:5031/api/ravis/count', {
+                params: {
+                    search: searchTerm,
+                    jobs: selectedJobs,
+                    nisbes: selectedNisbes,
+                },
+                paramsSerializer: params => {
+                    return Object.keys(params)
+                        .map(key => Array.isArray(params[key])
+                            ? params[key].map(val => `${key}=${val}`).join('&')
+                            : `${key}=${params[key]}`)
+                        .join('&');
+                },
+            });
             setTotalRavis(response.data);
-            console.log('Total ravis set to:', response.data.TotalCount);
         } catch (error) {
             console.error('Error fetching total ravis count:', error);
             setTotalRavis(0);
@@ -53,13 +70,38 @@ const RaviList = () => {
             setIsLoading(false);
         }
     };
+
+    const fetchJobList = async () => {
+        try {
+            const response = await axios.get('http://localhost:5031/api/Ravis/job-list');
+            setJobList(response.data);
+        } catch (error) {
+            console.error('Error fetching job list:', error);
+        }
+    };
+
+    const fetchNisbeList = async () => {
+        try {
+            const response = await axios.get('http://localhost:5031/api/Ravis/nisbe-list');
+            setNisbeList(response.data);
+        } catch (error) {
+            console.error('Error fetching nisbe list:', error);
+        }
+    };
+
     const handlePageClick = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
 
     const handleSearch = (event) => {
         setSearchTerm(event.target.value);
-        setCurrentPage(1); // Reset to first page when searching
+        setCurrentPage(1);
+    };
+    
+    const handleFilterApply = ({ jobs, nisbes }) => {
+        setSelectedJobs(jobs);
+        setSelectedNisbes(nisbes);
+        setCurrentPage(1);
     };
 
     const renderPagination = () => {
@@ -87,10 +129,15 @@ const RaviList = () => {
 
     return (
         <div className="flex justify-center">
+            <div className="w-1/4 mt-5 mr-5">
+                <RaviFilters
+                    jobList={jobList}
+                    nisbeList={nisbeList}
+                    onFilterApply={handleFilterApply}
+                />
+            </div>
             <div className="w-3/4 mt-5">
                 <h1 className="text-center text-4xl font-extrabold p-10 text-gray-700">Ravi List</h1>
-
-                {/* Search bar */}
                 <div className="mb-5 flex justify-center">
                     <input
                         type="text"
@@ -99,14 +146,20 @@ const RaviList = () => {
                         onChange={handleSearch}
                         className="w-full max-w-md p-3 text-lg border rounded-full"
                     />
-                    
                 </div>
 
                 <div className="mb-5 p-4 bg-white/80 backdrop-blur-lg rounded-lg shadow-lg" key={totalRavis}>
                     <p className="text-xl font-bold text-gray-800 mb-2">
                         Total Ravis Found: {isLoading ? 'Loading...' : totalRavis}
                     </p>
-                    </div>
+                    <p className="text-md text-gray-700">
+                        <span className="font-semibold">Current Filters:</span>
+                        {selectedJobs.length > 0 && <span className="ml-2 px-2 py-1 bg-orange-100 rounded-full text-sm">{`Jobs: ${selectedJobs.join(', ')}`}</span>}
+                        {selectedNisbes.length > 0 && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-full text-sm">{`Nisbes: ${selectedNisbes.join(', ')}`}</span>}
+                        {searchTerm && <span className="ml-2 px-2 py-1 bg-green-100 rounded-full text-sm">{`Search: "${searchTerm}"`}</span>}
+                        {selectedJobs.length === 0 && selectedNisbes.length === 0 && !searchTerm && <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full text-sm">None</span>}
+                    </p>
+                </div>
                 <ul className="space-y-5">
                     {ravis.map((ravi) => (
                         <li key={ravi.ravi_id} className="p-4 border rounded-lg shadow-lg bg-white/80 backdrop-blur-lg shadow-orange-300 transform transition-transform duration-300  hover:shadow-orange-100">
@@ -122,13 +175,10 @@ const RaviList = () => {
                             <p className="text-center text-gray-700"><strong>Death Year (Miladi):</strong> {ravi.death_year_m || '-'}</p>
                             <p className="text-center text-gray-700"><strong>Places Lived:</strong> {ravi.placed_lived || '-'}</p>
                             <p className="text-center text-gray-700"><strong>Job:</strong> {ravi.job || '-'}</p>
-                            
                         </li>
                     ))}
                 </ul>
 
-
-                {/* Pagination controls */}
                 <div className="flex justify-center mt-5 space-x-3">
                     <button
                         onClick={() => setCurrentPage((prev) => prev > 1 ? prev - 1 : prev)}
@@ -144,7 +194,6 @@ const RaviList = () => {
                         Next
                     </button>
                 </div>
-
             </div>
         </div>
     );

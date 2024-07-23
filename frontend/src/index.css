@@ -122,6 +122,46 @@ svg {
   filter: invert(1);
 }
 
+.arabic-keyboard {
+  height: auto;
+  width: 300px; /* Adjusted width for a 5x8 layout */
+  padding: 15px;
+  margin: 10px auto;
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-left: 385px;
+}
+
+.arabic-keyboard button {
+  width: 30px;
+  height: 30px;
+  margin: 3px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.arabic-keyboard button:hover {
+  background-color: #e0e0e0;
+}
+
+.arabic-keyboard .space {
+  width: 100%;
+}
+
+.arabic-keyboard .delete {
+  background-color: #ff6b6b;
+  color: white;
+  width: 100%;
+}
+
+
+
 .gradient {
   height: fit-content;
   z-index: 3;

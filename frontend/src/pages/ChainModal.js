@@ -44,6 +44,7 @@ const ChainModal = ({ chain, onClose }) => {
           {ravis.map((ravi, index) => (
             <div key={ravi.ravi_id} className="mb-4 w-full">
               <div className="border p-4 rounded-lg shadow">
+                <p><strong>Ravi #{index + 1}:</strong></p>
                 <p><strong>Ravi ID:</strong> {ravi.ravi_id}</p>
                 <p><strong>Name:</strong> {ravi.narrator_name || '-'}</p>
                 <p><strong>Tribe:</strong> {ravi.tribe || '-'}</p>
@@ -56,12 +57,10 @@ const ChainModal = ({ chain, onClose }) => {
                 <p><strong>Death Year (Miladi):</strong> {ravi.death_year_m || '-'}</p>
                 <p><strong>Places Lived:</strong> {ravi.placed_lived || '-'}</p>
                 <p><strong>Job:</strong> {ravi.job || '-'}</p>
-                
               </div>
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );
