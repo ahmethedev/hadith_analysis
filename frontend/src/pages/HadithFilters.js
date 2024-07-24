@@ -130,7 +130,7 @@ const Filters = ({ bookList, musannifList, onFilterApply }) => {
                         onChange={handleChainLengthChange}
                     />
                     <output htmlFor="numberSlider" className="slider-value" style={{left: `calc(${(chainLength / 19) * 100}% - 10px)`}}>
-                        {chainLength > 1 ? chainLength : 'Any'}
+                        {chainLength >= 0 ? chainLength : 'Any'}
                     </output>
                 </div>
             </div>

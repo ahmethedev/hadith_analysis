@@ -27,6 +27,11 @@ public async Task<IActionResult> GetHadiths(
     int perPage = 10;
     var query = _context.Hadiths.AsQueryable();
 
+    var totalCount = await query.CountAsync(); 
+    var totalPages = (int)Math.Ceiling((double)totalCount / perPage);
+    Response.Headers.Append("Total-Pages-hadiths", totalPages.ToString());
+    Response.Headers.Append("x", totalCount.ToString());
+
     if (!string.IsNullOrEmpty(search))
     {
         query = query.Where(h =>
@@ -48,23 +53,17 @@ public async Task<IActionResult> GetHadiths(
         query = query.Where(h => book.Contains(h.book));
     }
 
-    // Check if chainLength has a value before using it
-    if (chainLength.HasValue && chainLength.Value > 0)
+     if (chainLength.HasValue && chainLength.Value > 0)
     {
         query = query.Where(h => h.chain_length == chainLength.Value);
     }
-
-    var totalCount = await query.CountAsync(); 
-    var totalPages = (int)Math.Ceiling((double)totalCount / perPage);
 
     var hadiths = await query
         .Skip((page - 1) * perPage)
         .Take(perPage)
         .ToListAsync(); 
 
-    Response.Headers.Add("Total-Pages-hadiths", totalPages.ToString());
-    Response.Headers.Add("Total-Count-hadiths", totalCount.ToString());
-
+ 
     return Ok(hadiths);
 }
 
@@ -117,38 +116,47 @@ public async Task<IActionResult> GetHadiths(
 
                 return Ok(bookList);
             }
-            [HttpGet("count")]
-            public async Task<IActionResult> GetHadithsCount([FromQuery] string search = "", [FromQuery] List<string> musannif = null, [FromQuery] List<string> book = null)
+        [HttpGet("count")]
+        public async Task<IActionResult> GetHadithsCount(
+            [FromQuery] string search = "", 
+            [FromQuery] List<string> musannif = null, 
+            [FromQuery] List<string> book = null,
+            [FromQuery] int? chainLength = null)
+        {
+            var query = _context.Hadiths.AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
             {
-                var query = _context.Hadiths.AsQueryable();
-
-                if (!string.IsNullOrEmpty(search))
-                {
-                    query = query.Where(h =>
-                        EF.Functions.ILike(h.arabic, $"%{search}%") ||
-                        EF.Functions.ILike(h.turkish, $"%{search}%") ||
-                        EF.Functions.ILike(h.musannif, $"%{search}%") ||
-                        EF.Functions.ILike(h.book, $"%{search}%") ||
-                        EF.Functions.ILike(h.topic, $"%{search}%")
-                    );
-                }
-
-                if (musannif != null && musannif.Count > 0)
-                {
-                    query = query.Where(h => musannif.Contains(h.musannif));
-                }
-
-                if (book != null && book.Count > 0)
-                {
-                    query = query.Where(h => book.Contains(h.book));
-                }
-
-                var totalCount = await query.CountAsync();
-                
-                Console.WriteLine(totalCount);
-
-                return Ok(totalCount);
+                query = query.Where(h =>
+                    EF.Functions.ILike(h.arabic, $"%{search}%") ||
+                    EF.Functions.ILike(h.turkish, $"%{search}%") ||
+                    EF.Functions.ILike(h.musannif, $"%{search}%") ||
+                    EF.Functions.ILike(h.book, $"%{search}%") ||
+                    EF.Functions.ILike(h.topic, $"%{search}%")
+                );
             }
+
+            if (musannif != null && musannif.Count > 0)
+            {
+                query = query.Where(h => musannif.Contains(h.musannif));
+            }
+
+            if (book != null && book.Count > 0)
+            {
+                query = query.Where(h => book.Contains(h.book));
+            }
+
+            if (chainLength.HasValue && chainLength.Value > 0)
+            {
+                query = query.Where(h => h.chain_length == chainLength.Value);
+            }
+
+            var totalCount = await query.CountAsync();
+            
+            Console.WriteLine(totalCount);
+
+            return Ok(totalCount);
+        }
         [HttpGet("chain-length/{length}")]
         public async Task<IActionResult> GetHadithsByChainLength(int length, int page = 1, int pageSize = 20)
         {

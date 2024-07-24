@@ -46,7 +46,7 @@ const fetchData = async () => {
             },
         });
         setHadiths(response.data);
-        setTotalPages(parseInt(response.headers['total-pages-hadiths'] || '0', 10));
+        console.log(totalPages)
     } catch (error) {   
         console.error('Error fetching hadiths:', error);
     }
@@ -55,9 +55,8 @@ const fetchData = async () => {
 const fetchTotalHadiths = async () => {
     setIsLoading(true);
     try {
-        const response = await axios.get('http://localhost:5031/api/hadiths', {
+        const response = await axios.get('http://localhost:5031/api/hadiths/count', {
             params: {
-                page: 1,
                 search: searchTerm,
                 musannif: selectedMusannif,
                 book: selectedBook,
@@ -72,10 +71,11 @@ const fetchTotalHadiths = async () => {
                     .join('&');
             },
         });
-        setTotalHadiths(parseInt(response.headers['total-count-hadiths'] || '0', 10));
+        setTotalHadiths(response.data);
     } catch (error) {
         console.error('Error fetching total hadiths count:', error);
         setTotalHadiths(0);
+        setTotalPages(0);
     } finally {
         setIsLoading(false);
     }
