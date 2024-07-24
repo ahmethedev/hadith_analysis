@@ -42,7 +42,7 @@ const Dashboard = () => {
           case 'places':
           return (
             <ChartContainer 
-              id="place-chart"
+              id="places-chart"
               title="Places marked by Hadiths First Chain's Ravi's Death Places">
               <HadithByPlacesMap />
             </ChartContainer>

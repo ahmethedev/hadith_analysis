@@ -10,10 +10,12 @@ const HadithByTime = () => {
     labels: [],
     datasets: []
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get('http://localhost:5031/api/Ravis/hadiths-timeline');
         const data = response.data;
 
@@ -29,6 +31,8 @@ const HadithByTime = () => {
         });
       } catch (error) {
         console.error('Error fetching timeline data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -62,7 +66,13 @@ const HadithByTime = () => {
       }
     }
   };
-
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
   return <Line data={chartData} options={options} />;
 };
 

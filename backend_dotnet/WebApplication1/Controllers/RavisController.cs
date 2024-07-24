@@ -29,7 +29,11 @@ public class RavisController : ControllerBase
                 (r.tribe != null && r.tribe != "-1" && r.tribe != "0" && EF.Functions.ILike(r.tribe, $"%{search}%")) ||
                 (r.nisbe != null && r.nisbe != "-1" && r.nisbe != "0" && EF.Functions.ILike(r.nisbe, $"%{search}%")) ||
                 (r.degree != null && r.degree != "-1" && r.degree != "0" && EF.Functions.ILike(r.degree, $"%{search}%")) ||
-                (r.reliability != null && r.reliability != "-1" && r.reliability != "0" && EF.Functions.ILike(r.reliability, $"%{search}%"))
+                (r.reliability != null && r.reliability != "-1" && r.reliability != "0" && EF.Functions.ILike(r.reliability, $"%{search}%")) ||
+                (r.hocalari != null && EF.Functions.ILike(r.hocalari, $"%{search}%")) ||
+                (r.talebeleri != null && EF.Functions.ILike(r.talebeleri, $"%{search}%"))
+
+                
             );
         }
 
@@ -353,20 +357,66 @@ public class RavisController : ControllerBase
             .Select(r => r.job)
             .ToListAsync();
 
-        var uniqueJobs = new HashSet<string>();
+        var uniqueHocalari = new HashSet<string>();
 
         foreach (var job in jobs)
         {
             var splittedJobs = job.Split(new string[] { "-#-" }, StringSplitOptions.None);
             foreach (var sJob in splittedJobs)
             {
-                uniqueJobs.Add(sJob.Trim());
+                uniqueHocalari.Add(sJob.Trim());
             }
         }
 
-        var orderedUniqueJobs = uniqueJobs.OrderBy(j => j).ToList();
+        var orderedUniqueJobs = uniqueHocalari.OrderBy(j => j).ToList();
 
         return Ok(orderedUniqueJobs);
+    }
+    [HttpGet("hocalari-list")]
+    public async Task<IActionResult> GetHocalari()
+    {
+        var jobs = await _context.Ravis
+            .Where(r => !string.IsNullOrEmpty(r.hocalari))
+            .Select(r => r.hocalari)
+            .ToListAsync();
+
+        var uniqueHocalari = new HashSet<string>();
+
+        foreach (var hocalari in jobs)
+        {
+            var splittedHocalari = hocalari.Split(new string[] { "-#-" }, StringSplitOptions.None);
+            foreach (var sHocalari in splittedHocalari)
+            {
+                uniqueHocalari.Add(sHocalari.Trim());
+            }
+        }
+
+        var orderedUniqueHocalari = uniqueHocalari.OrderBy(j => j).ToList();
+
+        return Ok(orderedUniqueHocalari);
+    }
+    [HttpGet("talebeleri-list")]
+    public async Task<IActionResult> GetTalebeleri()
+    {
+        var jobs = await _context.Ravis
+            .Where(r => !string.IsNullOrEmpty(r.talebeleri))
+            .Select(r => r.talebeleri)
+            .ToListAsync();
+
+        var uniqueTalebeleri = new HashSet<string>();
+
+        foreach (var talebeleri in jobs)
+        {
+            var splittedTalebeleri = talebeleri.Split(new string[] { "-#-" }, StringSplitOptions.None);
+            foreach (var sTalebeleri in splittedTalebeleri)
+            {
+                uniqueTalebeleri.Add(sTalebeleri.Trim());
+            }
+        }
+
+        var orderedUniqueHocalari = uniqueTalebeleri.OrderBy(j => j).ToList();
+
+        return Ok(orderedUniqueHocalari);
     }
 
     [HttpGet("nisbe-list")]
@@ -392,5 +442,4 @@ public class RavisController : ControllerBase
 
         return Ok(orderedUniqueNisbes);
     }
-
 }

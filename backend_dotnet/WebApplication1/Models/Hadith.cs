@@ -13,4 +13,5 @@ public class Hadith
     public string? topic { get; set; } = string.Empty;
     public string? chain { get; set; } = string.Empty;
     public string page_index { get; set; } = string.Empty;
+    public int? chain_length { get; set; } 
 }

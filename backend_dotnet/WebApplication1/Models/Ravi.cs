@@ -44,5 +44,8 @@ public class Ravi
 
     [Column("biography")]
     public string? biography { get; set; }
-
+    [Column("hocalari")]
+    public string? hocalari { get; set;}
+    [Column ("talebeleri")]
+    public string? talebeleri { get; set;}
 }

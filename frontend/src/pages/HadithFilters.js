@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Filters = ({ bookList, musannifList, onFilterApply }) => {
     const [selectedBooks, setSelectedBooks] = useState([]);
     const [selectedMusannifs, setSelectedMusannifs] = useState([]);
     const [bookSearch, setBookSearch] = useState('');
     const [musannifSearch, setMusannifSearch] = useState('');
-    const [isBooksOpen, setIsBooksOpen] = useState(true);
-    const [isMusannifsOpen, setIsMusannifsOpen] = useState(true);
+    const [isBooksOpen, setIsBooksOpen] = useState(false);
+    const [isMusannifsOpen, setIsMusannifsOpen] = useState(false);
+    const [chainLength, setChainLength] = useState();
 
     const handleBookToggle = (book) => {
         setSelectedBooks(prev =>
@@ -29,8 +30,21 @@ const Filters = ({ bookList, musannifList, onFilterApply }) => {
     );
 
     const handleFilter = () => {
-        onFilterApply({ books: selectedBooks, musannifs: selectedMusannifs });
+        onFilterApply({ books: selectedBooks, musannifs: selectedMusannifs, chainLength });
     };
+
+    const handleChainLengthChange = (event) => {
+        setChainLength(parseInt(event.target.value));
+    };
+
+    useEffect(() => {
+        const slider = document.getElementById('numberSlider');
+        const updateSliderPosition = () => {
+            const percent = ((chainLength - 0) / (19 - 0)) * 100;
+            slider.style.background = `linear-gradient(to right, #5a67d8 0%, #5a67d8 ${percent}%, #e0e0e0 ${percent}%, #e0e0e0 100%)`;
+        };
+        updateSliderPosition();
+    }, [chainLength]);
 
     return (
         <div className="bg-gray-100 p-4 rounded-lg">
@@ -38,11 +52,11 @@ const Filters = ({ bookList, musannifList, onFilterApply }) => {
 
             <div className="mb-6">
                 <div 
-                    className="flex justify-between items-center bg-gray-100 p-2 rounded cursor-pointer"
+                    className="flex justify-between items-center bg-gray-200 p-2 rounded cursor-pointer"
                     onClick={() => setIsBooksOpen(!isBooksOpen)}
                 >
                     <h3 className="text-lg font-semibold">Books</h3>
-                    <span>{isBooksOpen ? '▼' : '▲'}</span>
+                    <span>{isBooksOpen ? '▲' : '▼'}</span>
                 </div>
                 {isBooksOpen && (
                     <>
@@ -75,7 +89,7 @@ const Filters = ({ bookList, musannifList, onFilterApply }) => {
                     onClick={() => setIsMusannifsOpen(!isMusannifsOpen)}
                 >
                     <h3 className="text-lg font-semibold">Musannif</h3>
-                    <span>{isMusannifsOpen ? '▼' : '▲'}</span>
+                    <span>{isMusannifsOpen ? '▲' : '▼'}</span>
                 </div>
                 {isMusannifsOpen && (
                     <>
@@ -100,6 +114,25 @@ const Filters = ({ bookList, musannifList, onFilterApply }) => {
                         </div>
                     </>
                 )}
+            </div>
+
+            <div className="number-selector mb-6">
+                <h3 className="text-lg font-semibold mb-2">Select Chain Length</h3>
+                <div className="slider-container">
+                    <input 
+                        type="range" 
+                        min="0" 
+                        max="19" 
+                        value={chainLength} 
+                        step="1" 
+                        className="slider" 
+                        id="numberSlider"
+                        onChange={handleChainLengthChange}
+                    />
+                    <output htmlFor="numberSlider" className="slider-value" style={{left: `calc(${(chainLength / 19) * 100}% - 10px)`}}>
+                        {chainLength > 1 ? chainLength : 'Any'}
+                    </output>
+                </div>
             </div>
 
             <button

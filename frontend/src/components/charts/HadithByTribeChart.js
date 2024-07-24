@@ -10,10 +10,11 @@ const HadithByTribeChart = () => {
     labels: [],
     datasets: [],
   });
-
+  const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true)
         const response = await axios.get('http://localhost:5031/api/Ravis/hadith-by-tribe');
         const data = response.data;
 
@@ -29,6 +30,8 @@ const HadithByTribeChart = () => {
         });
       } catch (error) {
         console.error('Error fetching hadith by tribe data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -47,6 +50,13 @@ const HadithByTribeChart = () => {
     },
   };
 
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
   return <Pie data={chartData} options={options} />;
 };
 

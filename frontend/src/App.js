@@ -6,7 +6,7 @@ import HadithsList from './pages/HadithsList';
 import Analysis from './pages/Analysis';
 import Navbar from './components/common/Navbar';
 import RaviMap from './pages/RaviMap';
-
+import 'leaflet/dist/leaflet.css';
 function App() {
   return (
     <Router>

@@ -10,10 +10,13 @@ const HadithByBookChart = () => {
     labels: [],
     datasets: [],
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
+
         const response = await axios.get('http://localhost:5031/api/Hadiths/hadith-by-book');
         const data = response.data;
 
@@ -29,6 +32,8 @@ const HadithByBookChart = () => {
         });
       } catch (error) {
         console.error('Error fetching hadith by book data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -62,6 +67,13 @@ const HadithByBookChart = () => {
       }
     }
   };
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
 
   return <Bar data={chartData} options={options} />;
 };

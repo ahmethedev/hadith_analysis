@@ -10,16 +10,22 @@ const RaviList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [jobList, setJobList] = useState([]);
     const [nisbeList, setNisbeList] = useState([]);
+    const [hocalarList, setHocalarList] = useState([]);
+    const [talebelerList, setTalebelerList] = useState([]);
     const [selectedJobs, setSelectedJobs] = useState([]);
     const [selectedNisbes, setSelectedNisbes] = useState([]);
+    const [selectedHocalar, setSelectedHocalar] = useState([]);
+    const [selectedTalebeler, setSelectedTalebeler] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         fetchData();
         fetchJobList();
         fetchNisbeList();
+        fetchHocalarList();
+        fetchTalebelerList();
         fetchTotalRavis();
-    }, [currentPage, searchTerm, selectedJobs, selectedNisbes]);
+    }, [currentPage, searchTerm, selectedJobs, selectedNisbes, selectedHocalar, selectedTalebeler]);
 
     const fetchData = async () => {
         try {
@@ -29,6 +35,8 @@ const RaviList = () => {
                     search: searchTerm,
                     jobs: selectedJobs,
                     nisbes: selectedNisbes,
+                    hocalar: selectedHocalar,
+                    talebeler: selectedTalebeler,
                 },
                 paramsSerializer: params => {
                     return Object.keys(params)
@@ -53,6 +61,8 @@ const RaviList = () => {
                     search: searchTerm,
                     jobs: selectedJobs,
                     nisbes: selectedNisbes,
+                    hocalar: selectedHocalar,
+                    talebeler: selectedTalebeler,
                 },
                 paramsSerializer: params => {
                     return Object.keys(params)
@@ -89,6 +99,24 @@ const RaviList = () => {
         }
     };
 
+    const fetchHocalarList = async () => {
+        try {
+            const response = await axios.get('http://localhost:5031/api/Ravis/hocalari-list');
+            setHocalarList(response.data);
+        } catch (error) {
+            console.error('Error fetching hocalar list:', error);
+        }
+    };
+
+    const fetchTalebelerList = async () => {
+        try {
+            const response = await axios.get('http://localhost:5031/api/Ravis/talebeleri-list');
+            setTalebelerList(response.data);
+        } catch (error) {
+            console.error('Error fetching talebeler list:', error);
+        }
+    };
+
     const handlePageClick = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
@@ -98,9 +126,11 @@ const RaviList = () => {
         setCurrentPage(1);
     };
     
-    const handleFilterApply = ({ jobs, nisbes }) => {
+    const handleFilterApply = ({ jobs, nisbes, hocalar, talebeler }) => {
         setSelectedJobs(jobs);
         setSelectedNisbes(nisbes);
+        setSelectedHocalar(hocalar);
+        setSelectedTalebeler(talebeler);
         setCurrentPage(1);
     };
 
@@ -133,6 +163,8 @@ const RaviList = () => {
                 <RaviFilters
                     jobList={jobList}
                     nisbeList={nisbeList}
+                    hocalarList={hocalarList}
+                    talebelerList={talebelerList}
                     onFilterApply={handleFilterApply}
                 />
             </div>
@@ -154,10 +186,12 @@ const RaviList = () => {
                     </p>
                     <p className="text-md text-gray-700">
                         <span className="font-semibold">Current Filters:</span>
-                        {selectedJobs.length > 0 && <span className="ml-2 px-2 py-1 bg-orange-100 rounded-full text-sm">{`Jobs: ${selectedJobs.join(', ')}`}</span>}
+                        {selectedJobs.length > 0 && <span className="ml-2 px-2 py-1 bg-red-100 rounded-full text-sm">{`Jobs: ${selectedJobs.join(', ')}`}</span>}
                         {selectedNisbes.length > 0 && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-full text-sm">{`Nisbes: ${selectedNisbes.join(', ')}`}</span>}
-                        {searchTerm && <span className="ml-2 px-2 py-1 bg-green-100 rounded-full text-sm">{`Search: "${searchTerm}"`}</span>}
-                        {selectedJobs.length === 0 && selectedNisbes.length === 0 && !searchTerm && <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full text-sm">None</span>}
+                        {selectedHocalar.length > 0 && <span className="ml-2 px-2 py-1 bg-green-100 rounded-full text-sm">{`Hocalar: ${selectedHocalar.join(', ')}`}</span>}
+                        {selectedTalebeler.length > 0 && <span className="ml-2 px-2 py-1 bg-yellow-100 rounded-full text-sm">{`Talebeler: ${selectedTalebeler.join(', ')}`}</span>}
+                        {searchTerm && <span className="ml-2 px-2 py-1 bg-purple-100 rounded-full text-sm">{`Search: "${searchTerm}"`}</span>}
+                        {selectedJobs.length === 0 && selectedNisbes.length === 0 && selectedHocalar.length === 0 && selectedTalebeler.length === 0 && !searchTerm && <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full text-sm">None</span>}
                     </p>
                 </div>
                 <ul className="space-y-5">
@@ -175,6 +209,8 @@ const RaviList = () => {
                             <p className="text-center text-gray-700"><strong>Death Year (Miladi):</strong> {ravi.death_year_m || '-'}</p>
                             <p className="text-center text-gray-700"><strong>Places Lived:</strong> {ravi.placed_lived || '-'}</p>
                             <p className="text-center text-gray-700"><strong>Job:</strong> {ravi.job || '-'}</p>
+                            <p className="text-center text-gray-700"><strong>Hocalari:</strong> {ravi.hocalari || '-'}</p>
+                            <p className="text-center text-gray-700"><strong>Talebeleri:</strong> {ravi.talebeleri || '-'}</p>
                         </li>
                     ))}
                 </ul>

@@ -15,6 +15,7 @@ const HadithsList = () => {
     const [bookList, setBookList] = useState([]);
     const [selectedMusannif, setSelectedMusannif] = useState([]);
     const [selectedBook, setSelectedBook] = useState([]);
+    const [selectedChainLength, setSelectedChainLength] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [showArabicKeyboard, setShowArabicKeyboard] = useState(false);
 
@@ -23,61 +24,62 @@ const HadithsList = () => {
         fetchMusannifList();
         fetchBookList();
         fetchTotalHadiths();
-    }, [currentPage, searchTerm, selectedMusannif, selectedBook]);
+    }, [currentPage, searchTerm, selectedMusannif, selectedBook, selectedChainLength]);
 
+const fetchData = async () => {
+    try {
+        const response = await axios.get(`http://localhost:5031/api/hadiths`, {
+            params: {
+                page: currentPage,
+                search: searchTerm,
+                musannif: selectedMusannif,
+                book: selectedBook,
+                chainLength: selectedChainLength > 0 ? selectedChainLength : undefined,
+            },
+            paramsSerializer: params => {
+                return Object.keys(params)
+                    .filter(key => params[key] !== undefined)
+                    .map(key => Array.isArray(params[key])
+                        ? params[key].map(val => `${key}=${val}`).join('&')
+                        : `${key}=${params[key]}`)
+                    .join('&');
+            },
+        });
+        setHadiths(response.data);
+        setTotalPages(parseInt(response.headers['total-pages-hadiths'] || '0', 10));
+    } catch (error) {   
+        console.error('Error fetching hadiths:', error);
+    }
+};
 
-
-    const fetchData = async () => {
-        try {
-            const response = await axios.get(`http://localhost:5031/api/hadiths`, {
-                params: {
-                    page: currentPage,
-                    search: searchTerm,
-                    musannif: selectedMusannif,
-                    book: selectedBook,
-                },
-                paramsSerializer: params => {
-                    return Object.keys(params)
-                        .map(key => Array.isArray(params[key])
-                            ? params[key].map(val => `${key}=${val}`).join('&')
-                            : `${key}=${params[key]}`)
-                        .join('&');
-                },
-            });
-            setHadiths(response.data);
-            setTotalPages(parseInt(response.headers['total-pages-hadiths'] || '0', 10));
-        } catch (error) {   
-            console.error('Error fetching hadiths:', error);
-        }
-    };
-
-    const fetchTotalHadiths = async () => {
-        setIsLoading(true);
-        try {
-            const response = await axios.get('http://localhost:5031/api/hadiths/count', {
-                params: {
-                    search: searchTerm,
-                    musannif: selectedMusannif,
-                    book: selectedBook,
-                },
-                paramsSerializer: params => {
-                    return Object.keys(params)
-                        .map(key => Array.isArray(params[key])
-                            ? params[key].map(val => `${key}=${val}`).join('&')
-                            : `${key}=${params[key]}`)
-                        .join('&');
-                },
-            });
-            console.log('Total hadiths response:', response.data);
-            setTotalHadiths(response.data);
-            console.log('Total hadiths set to:', response.data.TotalCount);
-        } catch (error) {
-            console.error('Error fetching total hadiths count:', error);
-            setTotalHadiths(0);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+const fetchTotalHadiths = async () => {
+    setIsLoading(true);
+    try {
+        const response = await axios.get('http://localhost:5031/api/hadiths', {
+            params: {
+                page: 1,
+                search: searchTerm,
+                musannif: selectedMusannif,
+                book: selectedBook,
+                chainLength: selectedChainLength > 0 ? selectedChainLength : undefined,
+            },
+            paramsSerializer: params => {
+                return Object.keys(params)
+                    .filter(key => params[key] !== undefined)
+                    .map(key => Array.isArray(params[key])
+                        ? params[key].map(val => `${key}=${val}`).join('&')
+                        : `${key}=${params[key]}`)
+                    .join('&');
+            },
+        });
+        setTotalHadiths(parseInt(response.headers['total-count-hadiths'] || '0', 10));
+    } catch (error) {
+        console.error('Error fetching total hadiths count:', error);
+        setTotalHadiths(0);
+    } finally {
+        setIsLoading(false);
+    }
+};
 
     const fetchMusannifList = async () => {
         try {
@@ -125,9 +127,10 @@ const HadithsList = () => {
         setSelectedChain(formattedChain);
     };
 
-    const handleFilterApply = ({ books, musannifs }) => {
+    const handleFilterApply = ({ books, musannifs, chainLength }) => {
         setSelectedBook(books);
         setSelectedMusannif(musannifs);
+        setSelectedChainLength(chainLength > 0 ? chainLength : null);
         setCurrentPage(1);
     };
 
@@ -169,11 +172,12 @@ const HadithsList = () => {
                         {selectedBook.length > 0 && <span className="ml-2 px-2 py-1 bg-orange-100 rounded-full text-sm">{`Books: ${selectedBook.join(', ')}`}</span>}
                         {selectedMusannif.length > 0 && <span className="ml-2 px-2 py-1 bg-blue-100 rounded-full text-sm">{`Musannifs: ${selectedMusannif.join(', ')}`}</span>}
                         {searchTerm && <span className="ml-2 px-2 py-1 bg-green-100 rounded-full text-sm">{`Search: "${searchTerm}"`}</span>}
-                        {selectedBook.length === 0 && selectedMusannif.length === 0 && !searchTerm && <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full text-sm">None</span>}
+                        {selectedChainLength > 0 && <span className="ml-2 px-2 py-1 bg-purple-100 rounded-full text-sm">{`Chain Length: ${selectedChainLength}`}</span>}
+                        {selectedBook.length === 0 && selectedMusannif.length === 0 && !searchTerm && !selectedChainLength && <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full text-sm">None</span>}
                     </p>
                 </div>
 
-                 <div className="mb-5 text-center relative">
+                <div className="mb-5 text-center relative">
                     <div className="flex items-center justify-center">
                         <input
                             type="text"
@@ -186,8 +190,7 @@ const HadithsList = () => {
                             onClick={toggleArabicKeyboard}
                             className="px-4 py-2 bg-blue-500 text-white rounded-r-full hover:bg-blue-600">
                             {showArabicKeyboard ? 'Hide' : 'Show'} Arabic Keyboard
-                                
-                        </button>
+                        </button>             
                     </div>
                     {showArabicKeyboard && (
                         <div className="absolute z-10 mt-2 left-1/2 transform -translate-x-1/2">

@@ -10,10 +10,12 @@ const HadithByMusannifChart = () => {
     labels: [],
     datasets: [],
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get('http://localhost:5031/api/Hadiths/hadith-by-musannif');
         const data = response.data;
 
@@ -30,6 +32,8 @@ const HadithByMusannifChart = () => {
         });
       } catch (error) {
         console.error('Error fetching hadith by musannif data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -48,6 +52,14 @@ const HadithByMusannifChart = () => {
       },
     },
   };
+
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
 
   return <Bar data={chartData} options={options} />;
 };

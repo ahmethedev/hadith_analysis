@@ -10,10 +10,12 @@ const HadithByRaviReliabilityChart = () => {
     labels: [],
     datasets: [],
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get('http://localhost:5031/api/Ravis/hadith-by-ravi-reliability');
         const data = response.data;
 
@@ -32,6 +34,8 @@ const HadithByRaviReliabilityChart = () => {
         });
       } catch (error) {
         console.error('Error fetching hadith by ravi reliability data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -53,6 +57,13 @@ const HadithByRaviReliabilityChart = () => {
       },
     },
   };
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
 
   return <Pie data={chartData} options={options} />;
 };

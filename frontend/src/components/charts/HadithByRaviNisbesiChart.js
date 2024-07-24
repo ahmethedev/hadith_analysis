@@ -9,10 +9,12 @@ const HadithByRaviNisbesiChart = () => {
   const [chartData, setChartData] = useState({
     datasets: [],
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get('http://localhost:5031/api/Ravis/hadith-by-ravi-nisbesi');
         const data = response.data;
 
@@ -31,7 +33,10 @@ const HadithByRaviNisbesiChart = () => {
         setChartData({ datasets });
       } catch (error) {
         console.error('Error fetching hadith by ravi nisbesi data:', error);
+      } finally {
+        setIsLoading(false);
       }
+      
     };
 
     fetchData();
@@ -77,6 +82,14 @@ const HadithByRaviNisbesiChart = () => {
       }
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
 
   return <Bubble data={chartData} options={options} />;
 };
